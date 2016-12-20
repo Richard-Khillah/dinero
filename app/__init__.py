@@ -1,14 +1,19 @@
-from flask import Flask
+import os
+import sys
+
+from flask import Flask, jsonify
 from flask_sqlalchemy import SQLAlchemy
+
 from config import config
 
-def create_app(envrionment):
-    app = Flask(__name__)
-    app.config.from_object(config[envrionment])
+app = Flask(__name__)
+app.config.from_object(config['DEVELOPMENT'])
 
-    from .root import root
-    app.register_blueprint(root)
+db = SQLAlchemy(app)
 
-    db = SQLAlchemy(app)
-    db.create_all()
-    return app
+@app.errorhandler(404)
+def not_found(error):
+    return jsonify({'message' : 'Page not found'})
+
+from app.auth.controller import auth as authModule
+app.register_blueprint(authModule)
