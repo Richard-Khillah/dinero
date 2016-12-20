@@ -20,6 +20,7 @@ class User(db.Model):
     def getStatus(self):
       return USER.STATUS[self.status]
 
+    ### this funciton is required in all models!!!
     def toDict(self):
         user = {
             'id': self.id,
