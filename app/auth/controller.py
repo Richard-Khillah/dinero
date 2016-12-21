@@ -91,6 +91,9 @@ def register():
     if 'username' in request.json:
         request.json['username'] = request.json['username'].lower()
 
+    if not 'email' in request.json or not 'username' in request.json:
+        return jsonify({'message' : 'Missing username or email'}), 400
+
     # check if user exists
     customers = Customer.query.filter(Customer.email==request.json['email']).all()
     customers += Customer.query.filter(Customer.username==request.json['username']).all()
