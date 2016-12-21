@@ -78,15 +78,18 @@ def login():
         'message' : 'Email or password incorrect.'
     }), 401
 
-
+#router is /auth/register
 @auth.route('/register', methods=['POST'])
 def register():
+    print(request)
     # pass data to validator
     form = CustomerValidator(data=request.json)
 
     # ensure lowercase
-    request.json['email'] = request.json['email'].lower()
-    request.json['username'] = request.json['username'].lower()
+    if 'email' in request.json:
+        request.json['email'] = request.json['email'].lower()
+    if 'username' in request.json:
+        request.json['username'] = request.json['username'].lower()
 
     # check if user exists
     customers = Customer.query.filter(Customer.email==request.json['email']).all()
@@ -112,12 +115,11 @@ def register():
             'exp' : datetime.utcnow() + timedelta(days=99999)
         }
 
-
-
         # create a jwt token for user
         token = jwt.encode(payload, app.config['SECRET_KEY'])
+        print(token)
 
-        return jsonify({'message' : 'Account created successfully.', 'customer' : customer.to_dict(), 'token' : token}), 201
+        return jsonify({'message' : 'Account created successfully.', 'customer' : customer.to_dict(), 'token' : token.decode('utf-8)')}), 201
 
 
     return jsonify({'message' : 'There is missing data', 'errors' : form.errors}), 400
