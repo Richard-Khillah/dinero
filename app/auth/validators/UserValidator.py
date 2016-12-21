@@ -1,7 +1,7 @@
 from wtforms import Form, StringField, PasswordField, validators
 
 
-class CustomerValidator(Form):
+class UserValidator(Form):
     name = StringField('Full Name', [
         validators.Length(min=3,max=50,message='Name must be between 3 and 50 characters'),
         validators.DataRequired()

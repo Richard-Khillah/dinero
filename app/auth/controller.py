@@ -3,11 +3,12 @@ import jwt
 from datetime import datetime, timedelta
 
 from app import app, db
-from app.auth.models.Customer import Customer
+from app.auth.models.User import User
 from app.auth.decorators import requires_login
-from app.auth.validators.CustomerValidator import CustomerValidator
+from app.auth.validators.UserValidator import UserValidator
 
 auth = Blueprint('auth', __name__, url_prefix='/auth')
+
 
 # This is middleware that happens before the route controller is executed
 # a user makes a request -> before_request(request) -> to specif route -> response
@@ -28,15 +29,15 @@ def before_request():
 @requires_login
 def index():
 
-    customers = Customer.query.all()
+    users = User.query.all()
 
-    customers_dicts = []
+    users_dicts = []
 
-    # convert all customers to dictionaries
-    for customer in customers:
-        customers_dicts.append(customer.to_dict())
+    # convert all users to dictionaries
+    for user in users:
+        users_dicts.append(user.to_dict())
 
-    return jsonify({'message': 'done', 'data': {'customers': customers_dicts}})
+    return jsonify({'message': 'done', 'data': {'users': users_dicts}})
 
 
 @auth.route('/login', methods=['POST'])
@@ -47,18 +48,18 @@ def login():
             'message' : 'Missing email or password'
         }), 400
 
-    customer = Customer.query.filter(Customer.email==request.json['email']).all()
+    user = User.query.filter(User.email==request.json['email']).all()
 
-    if len(customer) is 0:
+    if len(user) is 0:
         return jsonify({
             'message' : 'Email or password incorrect.'
         }), 401
 
-    if customer[0].check_password(request.json['password']):
+    if user[0].check_password(request.json['password']):
         payload = {
-            'id' : customer[0].id,
-            'username' : customer[0].username,
-            'email' : customer[0].email,
+            'id' : user[0].id,
+            'username' : user[0].username,
+            'email' : user[0].email,
             'exp' : datetime.utcnow() + timedelta(days=99999)
         }
 
@@ -68,8 +69,8 @@ def login():
         return jsonify({
             'message' : 'successfully logged in.',
             'data' : {
-                'customer' : customer[0].to_dict(),
-                'token' : token
+                'user' : user[0].to_dict(),
+                'token' : token.decode('utf-8')
             }
         })
 
@@ -83,46 +84,42 @@ def login():
 def register():
     print(request)
     # pass data to validator
-    form = CustomerValidator(data=request.json)
-
-    # ensure lowercase
-    if 'email' in request.json:
-        request.json['email'] = request.json['email'].lower()
-    if 'username' in request.json:
-        request.json['username'] = request.json['username'].lower()
-
-    if not 'email' in request.json or not 'username' in request.json:
-        return jsonify({'message' : 'Missing username or email'}), 400
-
-    # check if user exists
-    customers = Customer.query.filter(Customer.email==request.json['email']).all()
-    customers += Customer.query.filter(Customer.username==request.json['username']).all()
-
-
-    if len(customers) != 0:
-        return jsonify({
-            'message': 'That user already exists'
-        }), 400
+    form = UserValidator(data=request.json)
 
 
     if form.validate():
-        # add customer to database
-        customer = Customer(request.json['name'],request.json['username'],request.json['email'],request.json['password'])
-        db.session.add(customer)
+        # ensure lowercase
+        request.json['email'] = request.json['email'].lower()
+        request.json['username'] = request.json['username'].lower()
+
+
+        # check if user exists
+        users = User.query.filter(User.email==request.json['email']).all()
+        users += User.query.filter(User.username==request.json['username']).all()
+
+
+        if len(users) != 0:
+            return jsonify({
+                'message': 'That user already exists'
+            }), 400
+
+
+        # add user to database
+        user = User(request.json['name'],request.json['username'],request.json['email'],request.json['password'])
+        db.session.add(user)
         db.session.commit()
 
         payload = {
-            'id' : customer.id,
-            'username' : customer.username,
-            'email' : customer.email,
+            'id' : user.id,
+            'username' : user.username,
+            'email' : user.email,
             'exp' : datetime.utcnow() + timedelta(days=99999)
         }
 
         # create a jwt token for user
         token = jwt.encode(payload, app.config['SECRET_KEY'])
-        print(token)
 
-        return jsonify({'message' : 'Account created successfully.', 'customer' : customer.to_dict(), 'token' : token.decode('utf-8)')}), 201
+        return jsonify({'message' : 'Account created successfully.', 'user' : user.to_dict(), 'token' : token.decode('utf-8')}), 201
 
 
     return jsonify({'message' : 'There is missing data', 'errors' : form.errors}), 400
