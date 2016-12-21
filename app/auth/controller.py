@@ -13,8 +13,9 @@ auth = Blueprint('auth', __name__, url_prefix='/auth')
 # a user makes a request -> before_request(request) -> to specif route -> response
 @auth.before_request
 def before_request():
-    if hasattr(request.headers, 'Authorization'):
+    if 'Authorization' in request.headers:
         token = request.headers['Authorization'].split(' ')[1]
+
         try:
             g.user = jwt.decode(token,app.config['SECRET_KEY'])
         except (jwt.DecodeError, jwt.ExpiredSignatureError):
@@ -24,8 +25,9 @@ def before_request():
 
 
 @auth.route('/')
+@requires_login
 def index():
-    print(g.user)
+
     customers = Customer.query.all()
 
     customers_dicts = []

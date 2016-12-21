@@ -20,11 +20,11 @@ bcrypt = Bcrypt(app)
 # error handlers
 @app.errorhandler(404)
 def not_found(error):
-    return jsonify({'message' : 'Page not found'})
+    return jsonify({'message' : 'Page not found'}), 404
 
 @app.errorhandler(403)
 def error_forbidden(error):
-    return jsonify({'message' : 'You must login first'})
+    return jsonify({'message' : 'You must login first'}), 403
 
 # Import routes
 from app.auth.controller import auth as authModule
