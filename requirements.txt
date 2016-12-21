@@ -1,8 +1,6 @@
 bcrypt==3.1.2
 cffi==1.9.1
 click==6.6
-conda==4.1.11
-conda-env==2.5.0a0
 coreapi==2.1.1
 Django==1.10.4
 django-rest-swagger==2.1.0
