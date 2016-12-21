@@ -1,7 +1,6 @@
 from flask import Blueprint, request, g, redirect, url_for, jsonify
 import jwt
 from datetime import datetime, timedelta
-import pprint
 
 from app import app, db
 from app.auth.models.User import User
@@ -83,8 +82,6 @@ def login():
 #router is /auth/register
 @auth.route('/register', methods=['POST'])
 def register():
-    print(pprint.pformat(request.values, depth=5))
-
     # pass data to validator
     form = UserValidator(data=request.json)
 
