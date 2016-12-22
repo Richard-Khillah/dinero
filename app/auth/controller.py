@@ -1,7 +1,6 @@
 from flask import Blueprint, request, g, redirect, url_for, jsonify
 import jwt
 from datetime import datetime, timedelta
-import pprint
 
 from app import app, db
 from app.auth.models.User import User
@@ -49,7 +48,9 @@ def login():
             'message' : 'Missing email or password'
         }), 400
 
-    user = User.query.filter(User.email==request.json['email']).all()
+    user = User.query.filter(User.email==request.json['email']).order_by(User.id).all()
+
+    console.log(user)
 
     if len(user) is 0:
         return jsonify({
@@ -83,8 +84,6 @@ def login():
 #router is /auth/register
 @auth.route('/register', methods=['POST'])
 def register():
-    print(pprint.pformat(request.values, depth=5))
-
     # pass data to validator
     form = UserValidator(data=request.json)
 
@@ -96,8 +95,8 @@ def register():
 
 
         # check if user exists
-        users = User.query.filter(User.email==request.json['email']).all()
-        users += User.query.filter(User.username==request.json['username']).all()
+        users = User.query.order_by(User.id).filter(User.email==request.json['email']).all()
+        users += User.query.order_by(User.id).filter(User.username==request.json['username']).all()
 
 
         if len(users) != 0:
