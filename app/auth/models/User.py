@@ -12,11 +12,15 @@ class User(db.Model):
     role = db.Column(db.SmallInteger, default=USER.CUSTOMER)
     _password = db.Column(db.String(120))
 
+    restaurant_id = db.Column(db.Integer, db.ForeignKey('restaurant.id'))
+
+
     def __init__(self, name=None, username=None, email=None, password=None):
       self.name = name
       self.email = email
       self.username = username
       self.password = password
+      self.restaurant = None
 
     @hybrid_property
     def password(self):
