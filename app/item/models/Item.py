@@ -2,9 +2,10 @@ from app import db
 
 class Item(db.Model):
     id = db.Column(db.Integer, primary_key=True)
+    resturant_id = ()
     name = db.Column(db.String(50))
     cost = db.Column(db.Float)
-    description = db.
+    description = db.Column(db.String(100))
 
     def __init__(self, name, cost, description):
         self.name = name
