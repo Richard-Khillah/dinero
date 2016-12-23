@@ -7,7 +7,7 @@ class Item(db.Model):
     cost = db.Column(db.Float)
     description = db.Column(db.String(100))
 
-    def __init__(self, name, cost, description):
+    def __init__(self, name=None, cost=None, description=None):
         self.name = name
         self.cost = cost
         self.description = description

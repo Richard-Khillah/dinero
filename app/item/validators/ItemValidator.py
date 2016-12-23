@@ -7,8 +7,8 @@ class ItemValidator(Form):
     ])
 
     name = StringField('Name', [
-        validators.DataRequired(),
-        validators.Length(min=2, max=50, message='Name must be between 2 and 50 characters.')
+        validators.Length(min=2, max=50, message='Name must be between 2 and 50 characters.'),
+        validators.DataRequired()
     ])
 
     cost = FloatField('Cost', [

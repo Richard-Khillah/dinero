@@ -10,16 +10,16 @@ from app.item.validators.ItemValidator import ItemValidator
 
 
 
-itembp = Blueprint('item', __name__, url_prefix='/item')
+itemMod = Blueprint('item', __name__, url_prefix='/item')
 
 ##index
-@itembp.route('/', methods=['GET'])
+@itemMod.route('/', methods=['GET'])
 def index():
     print('index')
     pass
 
 
-@itembp.route('/add_item', methods=['POST'])
+@itemMod.route('/add_item', methods=['POST'])
 #@requires_login
 #@requres_status_manager
 def add_item():
@@ -47,26 +47,29 @@ def add_item():
         }), 201
     return jsonify({'message': 'There was an error adding data', 'error': form.errors}), 400
 
+"""
 ## update
-@itembp.route('/update', method='POST')
+@itemMod.route('/update', methods='POST')
+#@itemMod.route('/<int: itemId>', methods=['GET', 'PUT', 'DELETE'])
 def update():
-    print('update')
+    print("update")
     pass
 
 ## get
-@itembp.route('/get', method='GET')
+@itemMod.route('/get', methods='GET')
 def get():
     print('get')
     pass
 
 ## view
-@itembp.route('/view', method='GET')
+@itemMod.route('/view', methods='GET')
 def view():
     print('view')
     pass
 
 ##delete item
-@itembp.route('/delete')
+@itemMod.route("/delete")
 def delete():
-    print('delete')
+    print("delete")
     pass
+"""
