@@ -3,10 +3,12 @@ from datetime import datetime, timedelta
 import pprint
 
 from app import db
-from app.auth.models.User import User
-from app.auth.decorators import requires_login, requres_status_manager
-from app.item.validators.ItemValidator import ItemValidator
 from app.item.models.Item import Item
+from app.auth.models.User import User
+from app.item.validators.ItemValidator import ItemValidator
+#from app.auth.decorators import requires_login, requres_status_manager
+
+
 
 itembp = Blueprint('item', __name__, url_prefix='/item')
 
