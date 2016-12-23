@@ -12,13 +12,11 @@ restaurantMod = Blueprint('restaurant', __name__, url_prefix='/restaurant')
 ## TODO: create auth validation on all routes
 
 @restaurantMod.route('/', methods=['GET','POST'])
-def create_restaurant():
+def index_restaurant():
     if request.method == 'GET':
         # TODO: check if user is admin
 
         # TODO: check if user is owner
-
-
         page = None
         # check if user supplied a page number in query
         if request.args.get('page', ''):
@@ -59,7 +57,8 @@ def create_restaurant():
 
     else: # POST request
         try:
-            request.json['restaurant_number'] = int(request.json['restaurant_number'])
+            request.json["restaurant_number"] = int(request.json["restaurant_number"])
+            print(request.json['restaurant_number'])
         except:
             return jsonify({
                 'status' : 'error',
@@ -116,7 +115,7 @@ def restaurant_view(restaurantId):
     if restaurantId < 1:
         return jsonify({
             'message' : 'There was an error',
-            'error' : {
+            'errors' : {
                 'restaurantId' : 'Must be greater than 0'
             }
         }), 404
@@ -126,7 +125,7 @@ def restaurant_view(restaurantId):
     if len(restaurants) is not 1:
         return jsonify({
             'message' : 'Restaurant cannot be found',
-            'error' : {
+            'errors' : {
                 'restaurant' : 'No restaurant with id of %d' % restaurantId
             }
         })

@@ -1,11 +1,14 @@
 #!/usr/bin/env bash
 
-echo "Removing old db"
+if [ -f app.sqlite ]; then
+  echo "Removing old db"
 
-rm app.sqlite
+  rm app.sqlite
+fi
+
 
 echo "Creating db"
 
-python db.py >/dev/null 2>&1
+python db.py >/dev/null
 
 echo "Database created"
