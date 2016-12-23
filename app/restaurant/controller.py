@@ -4,8 +4,10 @@ from flask import Blueprint, request, g, redirect, url_for, jsonify
 
 from app import db
 from app.restaurant.models.Restaurant import Restaurant
+#from models import Restaurant
 from app.auth.models.User import User
 from app.restaurant.validators.RestaurantValidator import RestaurantValidator
+#from validators.RestaurantValidator import RestaurantValidator
 
 restaurantMod = Blueprint('restaurant', __name__, url_prefix='/restaurant')
 
@@ -14,6 +16,7 @@ restaurantMod = Blueprint('restaurant', __name__, url_prefix='/restaurant')
 
 ## create
 @restaurantMod.route('/', methods=['POST'])
+#@restaurantMod.route('/create_restaurant', methods=['POST'])
 def create_restaurant():
     form = RestaurantValidator(data=request.json)
 

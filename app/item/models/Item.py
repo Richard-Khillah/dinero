@@ -2,7 +2,7 @@ from app import db
 
 class Item(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    resturant_id = ()
+    #resturant_id = ()
     name = db.Column(db.String(50))
     cost = db.Column(db.Float)
     description = db.Column(db.String(100))
@@ -16,9 +16,11 @@ class Item(db.Model):
         item = {
             'id' = self.id,
             'name' = self.name,
-            'cost' = self.cost
+            'cost' = self.cost,
             'description' = self.description
         }
+        return item
 
     def __repr__(self):
-        return 'id: %d \tname: %s \tcost: %f' % (self.id, self.name, self.cost)
+        return '<Item %r $%f %r>' % (self.name, self.cost, self.description)
+        #'id: %d \tname: %s \tcost: %f' % (self.id, self.name, self.cost)

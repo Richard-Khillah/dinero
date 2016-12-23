@@ -7,7 +7,7 @@ CUSTOMER = 0
 ROLE = {
   ADMIN: 'admin',
   OWNER: 'owner',
-  MANAGER: 'manager'
+  MANAGER: 'manager',
   SERVER: 'server',
   CUSTOMER: 'customer'
 }
