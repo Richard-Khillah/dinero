@@ -12,6 +12,7 @@ class Development(Default):
     SQLALCHEMY_MIGRATE_REPO = os.path.join(_basedir, 'db_repository')
     DEBUG = True
     SECRET_KEY = 'asdfljk23piorj9032rjidafjd90sfasfds0fiasd'
+    SQLALCHEMY_TRACK_MODIFICATIONS = False
 
 config = {
     'DEFAULT': Default,
