@@ -14,10 +14,10 @@ class Item(db.Model):
 
     def to_dict(self):
         item = {
-            'id' = self.id,
-            'name' = self.name,
-            'cost' = self.cost,
-            'description' = self.description
+            'id': self.id,
+            'name': self.name,
+            'cost': self.cost,
+            'description': self.description
         }
         return item
 
