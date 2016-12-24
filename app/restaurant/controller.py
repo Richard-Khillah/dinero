@@ -6,8 +6,9 @@ from app import db
 from app.restaurant.models.Restaurant import Restaurant
 from app.auth.models.User import User
 from app.restaurant.validators.RestaurantValidator import RestaurantValidator
+from app.auth import constants as USER
 
-restaurantMod = Blueprint('restaurant', __name__, url_prefix='/restaurant')
+restaurantMod = Blueprint('restaurant', __name__, url_prefix='/restaurants')
 
 ## TODO: create auth validation on all routes
 
@@ -92,7 +93,10 @@ def index_restaurant():
                     'message' : 'There was an error'
                 }), 400
 
+            user = user[0]
+
             restaurant = Restaurant(user, request.json['name'], request.json['restaurant_number'], request.json['address'])
+            #user.role = USER.OWNER
 
             db.session.add(restaurant)
             db.session.commit()
@@ -107,42 +111,58 @@ def index_restaurant():
         return jsonify({
             'message' : 'There is missing data',
             'errors' : form.errors
-        })
+        }), 400
 
 ## view
-@restaurantMod.route('/<int:restaurantId>')
+## update
+## delete
+@restaurantMod.route('/<int:restaurantId>', methods=['GET', 'PUT', 'DELETE'])
 def restaurant_view(restaurantId):
+    # Happens for every request on this route
     if restaurantId < 1:
         return jsonify({
-            'message' : 'There was an error',
-            'errors' : {
-                'restaurantId' : 'Must be greater than 0'
-            }
+        'message' : 'There was an error',
+        'errors' : {
+        'restaurantId' : 'Must be greater than 0'
+        }
         }), 404
 
     restaurants = Restaurant.query.filter(Restaurant.id == restaurantId).all()
 
     if len(restaurants) is not 1:
         return jsonify({
-            'message' : 'Restaurant cannot be found',
-            'errors' : {
-                'restaurant' : 'No restaurant with id of %d' % restaurantId
+        'message' : 'Restaurant cannot be found',
+        'errors' : {
+        'restaurant' : 'No restaurant with id of %d' % restaurantId
+        }
+        }), 404
+
+    if request.method == 'GET':
+        restaurant = restaurants[0].to_dict()
+        restaurant['owner'] = restaurants[0].owner.to_dict()
+
+        return jsonify({
+            'status' : 'success',
+            'message' : 'restaurant found',
+            'data' : {
+                'restaurant' : restaurant
             }
         })
+    if request.method == 'DELETE':
+        # TODO: check if user is owner or admin
+        try:
+            db.session.delete(restaurants[0])
+            db.session.commit()
+        except:
+            return jsonify({
+                'status' : 'error',
+                'message' : 'There was a problem deleteing the restaurant',
+                'errors' : {
+                    'restaurant' : ['There was a problem deleteing the restaurant with id of %d' % restaurantId]
+                }
+            })
 
-    print(restaurants[0].owner.to_dict())
-
-    restaurant = restaurants[0].to_dict()
-    restaurant['owner'] = restaurants[0].owner.to_dict()
-
-    return jsonify({
-        'message' : 'restaurant found',
-        'data' : {
-            'restaurant' : restaurant
-        }
-    })
-
-## update
-
-
-## delete
+        return jsonify({
+            'status' : 'success',
+            'message' : 'The restaurant with id of %d was deleted.' % restaurantId
+        }), 200
