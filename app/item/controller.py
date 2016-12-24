@@ -13,70 +13,59 @@ from app.item.validators.ItemValidator import ItemValidator
 itemMod = Blueprint('item', __name__, url_prefix='/item')
 
 ##index
-@itemMod.route('/', methods=['GET'])
+@itemMod.route('/', methods=['GET', 'POST'])
 def index():
-    return jsonify({
-        'message': 'in index'
-    }), 201
-    pass
-
-
-@itemMod.route('/add_item', methods=['POST'])
-#@requires_login
-#@requres_status_manager
-def add_item():
-    print("got into add_item()")
-    form = ItemValidator(data=request.json)
-
-    if form.validate():
-        # Check whether item exists
-        check_item = Item.query.filter(Item.name==request.json['name']).all()
-        if len(check_item) != 0:
-            return jsonify({
-                'message': 'That item already exists.'
-            }), 400
-
-        #add item to database
-        item = Item(request.json['name'], request.json['cost'], request.json['description'])
-        db.session.add(item)
-        db.session.commit()
-
+    #index page
+    if request.method == 'GET':
         return jsonify({
-            'message': 'Item added successfully.',
-            'data': {
-                'item': item.to_dict()
-            }
+            'message': 'in index'
         }), 201
-    return jsonify({'message': 'There was an error adding data', 'error': form.errors}), 400
 
+    if request.method == 'POST':
+        print("got into add_item()")
+        form = ItemValidator(data=request.json)
+
+        if form.validate():
+            # Check whether item exists
+            check_item = Item.query.filter(Item.name==request.json['name']).all()
+            if len(check_item) != 0:
+                return jsonify({
+                    'message': 'That item already exists.'
+                }), 400
+
+            #add item to database
+            item = Item(request.json['name'], request.json['cost'], request.json['description'])
+            db.session.add(item)
+            db.session.commit()
+
+            return jsonify(
+                'Item added successfully.',
+                { 'item': item.to_dict()
+            }), 201
+        return jsonify({'message': 'There was an error adding data', 'error': form.errors}), 400
 
 ## view
-@itemMod.route('/<string:itemName>')#, methods=['GET'])
+@itemMod.route('/<string:itemName>', methods=['GET', 'PUT', 'DELETE'])
 def view(itemName):
+    if request.method == 'GET': pass
+    if request.method == 'PUT': pass
+    if request.method == 'DELETE': pass
+
     if itemName == "":
-        return jsonify({
-            'message': 'error',
-            'error' : {
-                'itemName': 'Must not be a null string argument'
-            }
-        }), 404
+        return jsonify('error: itemName must not be a null string argument'), 404
 
     item = Item.query.filter(Item.name == itemName).all()
 
     if not item:
         return jsonify({
-            'message': 'Item was not found. Ensure you have the right spelling.',
-            'error': {
-                'itemName': 'No item: %r in database.' % itemName
-            }
+            'Item was not found. Ensure you have the right spelling.',
+            '%r not found in database.' % itemName
         }), 404
-    item = item[0].to_dict()
 
+    item = item[0].to_dict()
     return jsonify({
-        'message': 'Helooooo from inside view!',
-        'data': {
-            'item': item
-        }
+        'message': 'inside view!',
+        'item': item
     }), 201
 
 
