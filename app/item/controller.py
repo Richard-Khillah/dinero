@@ -84,7 +84,7 @@ def get(itemName):
     item = item[0].to_dict()
     return item
 
-def dict(item):
+def a_dict(item):
     return item[0].to_dict()
 
     """
