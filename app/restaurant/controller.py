@@ -67,7 +67,7 @@ def index_restaurant():
                     'Restaurant number must be a positive integer.'
                 ],
                 'message' : 'There was a problem making the request.'
-            })
+            }), 400
 
         try:
             request.json['owner_id'] = int(request.json['owner_id'])
@@ -78,7 +78,7 @@ def index_restaurant():
                     'Owner id must be a positive integer.'
                 ],
                 'message' : 'There was a problem making the request.'
-            })
+            }), 400
 
         form = RestaurantValidator(data=request.json)
 
@@ -89,6 +89,7 @@ def index_restaurant():
 
             if len(user) != 1:
                 return jsonify({
+                    'status' : 'error',
                     'error' : 'Owner does not exist.',
                     'message' : 'There was an error'
                 }), 400
@@ -102,6 +103,7 @@ def index_restaurant():
             db.session.commit()
 
             return jsonify({
+                'status' : 'success',
                 'message' : 'Restaurant successfully added',
                 'data' : {
                     'restaurant' : restaurant.to_dict()
@@ -113,9 +115,7 @@ def index_restaurant():
             'errors' : form.errors
         }), 400
 
-## view
-## update
-## delete
+
 @restaurantMod.route('/<int:restaurantId>', methods=['GET', 'PUT', 'DELETE'])
 def restaurant_view(restaurantId):
     # Happens for every request on this route
@@ -137,7 +137,7 @@ def restaurant_view(restaurantId):
         }
         }), 404
 
-    if request.method == 'GET':
+    if request.method == 'GET': # single view
         restaurant = restaurants[0].to_dict()
         restaurant['owner'] = restaurants[0].owner.to_dict()
 
@@ -148,7 +148,7 @@ def restaurant_view(restaurantId):
                 'restaurant' : restaurant
             }
         })
-    if request.method == 'DELETE':
+    if request.method == 'DELETE': # single delete
         # TODO: check if user is owner or admin
         try:
             db.session.delete(restaurants[0])
@@ -160,9 +160,75 @@ def restaurant_view(restaurantId):
                 'errors' : {
                     'restaurant' : ['There was a problem deleteing the restaurant with id of %d' % restaurantId]
                 }
-            })
+            }), 500
 
         return jsonify({
             'status' : 'success',
             'message' : 'The restaurant with id of %d was deleted.' % restaurantId
         }), 200
+
+    else: # single update
+        try:
+            request.json["restaurant_number"] = int(request.json["restaurant_number"])
+            print(request.json['restaurant_number'])
+        except:
+            return jsonify({
+                'status' : 'error',
+                'errors' : [
+                    'Restaurant number must be a positive integer.'
+                ],
+                'message' : 'There was a problem making the request.'
+            }), 400
+
+        try:
+            request.json['owner_id'] = int(request.json['owner_id'])
+        except:
+            return jsonify({
+                'status' : 'error',
+                'errors' : [
+                    'Owner id must be a positive integer.'
+                ],
+                'message' : 'There was a problem making the request.'
+            }), 400
+
+        form = RestaurantValidator(data=request.json)
+
+        if form.validate():
+            restaurant = restaurants[0]
+
+            # TODO: get user from token 
+            user = User.query.filter(User.id==request.json['owner_id']).all()
+
+            if len(user) != 1:
+                return jsonify({
+                    'status' : 'error',
+                    'errors' : {
+                        'owner_id' : ['Owner does not exist.']
+                    },
+                    'message' : 'There was an error'
+                }), 400
+
+            user = user[0]
+
+            restaurant.owner = user
+            restaurant.name = request.json['name']
+            restaurant.restaurant_number = request.json['restaurant_number']
+            restaurant.address = request.json['address']
+
+            # save the restaurant updates
+            db.session.commit()
+
+            return jsonify({
+                'status' : 'sucess',
+                'message' : 'Restaurant successfully updated',
+                'data' : {
+                    'restaurant' : restaurant.to_dict()
+                }
+            })
+
+
+        return jsonify({
+            'status' : 'error',
+            'message' : 'There were problems with the request',
+            'errors' : form.errors
+        }), 400
