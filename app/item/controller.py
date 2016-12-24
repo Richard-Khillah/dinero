@@ -18,7 +18,10 @@ def index():
     #index page
     if request.method == 'GET':
         return jsonify({
-            'message': 'in index'
+            'legal routes': {
+                'route(\'/\')': 'for methods=[\'GET\',\'POST\']',
+                'route(\'/<string:itemName>\')': 'for methods=[\'GET\', \'PUT\', \'DELETE\']'
+                }
         }), 201
 
     # add item to database
@@ -32,9 +35,9 @@ def index():
             check_item = get(name)
             if check_item:
                 return jsonify(
-                    '%r already exists in your system.' % name,
-                    {'item': a_dict(check_item)}
-                    ), 400
+                    '%r already exists in your system.' % name,{
+                    'item': a_dict(check_item)
+                    }), 400
             #add item to database
             item = Item(request.json['name'], request.json['cost'], request.json['description'])
             db.session.add(item)
