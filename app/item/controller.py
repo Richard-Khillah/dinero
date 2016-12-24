@@ -43,19 +43,28 @@ def index():
                 }), 400
 
             #add item to database
-            item = Item(request.json['name'], request.json['cost'], request.json['description'])
-            db.session.add(item)
-            db.session.commit()
-            return jsonify({
-                'status': 'success',
-                'message': 'item added successfully.',
-                'data': {
-                    'added item': item.to_dict()
-                }
-            }), 201
+            try:
+                item = Item(request.json['name'], request.json['cost'], request.json['description'])
+                db.session.add(item)
+                db.session.commit()
+                return jsonify({
+                    'status': 'success',
+                    'message': 'item added successfully.',
+                    'data': {
+                        'added item': item.to_dict()
+                    }
+                }), 201
+            except:
+                return jsonify({
+                    'status': 'error',
+                    'message': 'there was an error adding the item',
+                    'error': {
+                        'key': ['errors here']
+                    }
+                }), 400
         return jsonify({
             'status': 'error',
-            'message': 'there was an error adding the item',
+            'message': 'there was an error with form validation',
             'error': form.errors
         }), 400
 
@@ -102,6 +111,11 @@ def update(itemName):
                     'key': ['errors']
                 }
             }), 400
+    return jsonify({
+        'status': 'error',
+        'message': 'there was an error with form validation',
+        'error': form.errors
+    }), 400
 
     # delete a single item
     if request.method == 'DELETE':
