@@ -28,12 +28,13 @@ def index():
 
         if form.validate():
             # Check whether item exists
-            check_item = Item.query.filter(Item.name==request.json['name']).all()
-            if len(check_item) != 0:
-                return jsonify({
-                    'message': 'That item already exists.'
-                }), 400
-
+            name = request.json['name']
+            check_item = get(name)#Item.query.filter(Item.name==request.json['name']).all()
+            if check_item:
+                return jsonify(
+                    '%r already exists in your system.' % name,
+                    {'item': a_dict(check_item)}
+                    ), 400
             #add item to database
             item = Item(request.json['name'], request.json['cost'], request.json['description'])
             db.session.add(item)
@@ -47,11 +48,12 @@ def index():
 
 @itemMod.route('/<string:itemName>', methods=['GET', 'PUT', 'DELETE'])
 def update(itemName):
-    #get the Item.
+
     if itemName == 'all':
         items = Item.query.all()
         return jsonify([a_dict(item) for item in items])
 
+    # get the Item from the database
     item = get(itemName)
     print(item)
     if not item:
