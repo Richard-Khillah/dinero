@@ -41,16 +41,17 @@ def index():
 
             return jsonify(
                 'Item added successfully.',
-                { 'item': item.to_dict()
+                { 'added item': item.to_dict()
             }), 201
         return jsonify({'message': 'There was an error adding data', 'error': form.errors}), 400
 
 @itemMod.route('/<string:itemName>', methods=['GET', 'PUT', 'DELETE'])
 def update(itemName):
     #get the Item.
-    #item = Item.query.filter(Item.name == itemName).first()
-    #if not item:
-    #    return jsonify('%r not found in database.' % itemName)
+    if itemName == 'all':
+        items = Item.query.all()
+        return jsonify([a_dict(item) for item in items])
+
     item = get(itemName)
     print(item)
     if not item:
