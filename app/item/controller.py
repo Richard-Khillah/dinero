@@ -65,13 +65,20 @@ def update(itemName):
     item = get(itemName)
     print(item)
     if not item:
-        return jsonify('%r not found in database.' % itemName), 400
+        return jsonify({
+            'status': 'error',
+            'message': '%r not found in database.' % itemName
+        }), 400
 
     # view a single Item
     if request.method == 'GET':
         item = a_dict(item)
         return jsonify({
-            'item': item
+            'status': 'success',
+            'message': 'found item successfully',
+            'data': {
+                'item': item
+            }
         }), 200
 
     # update a single Item
@@ -82,19 +89,37 @@ def update(itemName):
             item.description = request.json.get('description', item.description)
             db.session.commit()
             item = a_dict(item)
-            return jsonify({'updated item':item}), 200
+            return jsonify({
+                'status': 'success',
+                'message': 'updated item',
+                'data': item
+            }), 200
         except:
-            return jsonify('error occured when updating ', item), 400
+            return jsonify({
+                'status': 'error',
+                'messge': 'error occured when updating item',
+                'error': {
+                    'key': ['errors']
+                }
+            }), 400
 
     # delete a single item
     if request.method == 'DELETE':
         try:
             db.session.delete(item)
             db.session.commit()
-            return jsonify('%r deleted from the database.' % itemName), 200
+            return jsonify({
+                'status': 'success',
+                'message': '%r deleted from the database.' % itemName,
+            }), 200
         except:
-            return jsonify('error deleting %r from the database' % itemName,
-                            item), 400
+            return jsonify({
+                'status': 'error',
+                'message': '%r not deleted.',
+                'errors': {
+                    'key': ['errors here']
+                }
+            }), 400
 
 ## helper functions
 # Query itemName and return the item to the caller.
