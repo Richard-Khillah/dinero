@@ -17,12 +17,12 @@ itemMod = Blueprint('item', __name__, url_prefix='/item')
 def index():
     #index page
     if request.method == 'GET':
+        # Query all items in the database and return.
+        items = Item.query.all()
         return jsonify({
-            'legal routes': {
-                'route(\'/\')': 'for methods=[\'GET\',\'POST\']',
-                'route(\'/<string:itemName>\')': 'for methods=[\'GET\', \'PUT\', \'DELETE\']'
-                }
-        }), 201
+            'status': 'success',
+            'data': [a_dict(item) for item in items]
+        }), 200
 
     # add item to database
     if request.method == 'POST':
@@ -50,11 +50,6 @@ def index():
 
 @itemMod.route('/<string:itemName>', methods=['GET', 'PUT', 'DELETE'])
 def update(itemName):
-    # Query all items in the database and return.
-    if itemName == 'all':
-        items = Item.query.all()
-        return jsonify([a_dict(item) for item in items]), 200
-
     # retrieve and verify the existence of the Item from the database
     item = get(itemName)
     print(item)
