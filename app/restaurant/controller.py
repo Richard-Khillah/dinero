@@ -97,7 +97,7 @@ def index_restaurant():
             user = user[0]
 
             restaurant = Restaurant(user, request.json['name'], request.json['restaurant_number'], request.json['address'])
-            #user.role = USER.OWNER
+            user.role = USER.OWNER
 
             db.session.add(restaurant)
             db.session.commit()
@@ -196,7 +196,7 @@ def restaurant_view(restaurantId):
         if form.validate():
             restaurant = restaurants[0]
 
-            # TODO: get user from token 
+            # TODO: get user from token
             user = User.query.filter(User.id==request.json['owner_id']).all()
 
             if len(user) != 1:
