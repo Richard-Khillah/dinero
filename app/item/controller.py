@@ -68,7 +68,15 @@ def update(itemName):
 
     # update a single Item
     if request.method == 'PUT':
-        pass
+        try:
+            item.name = request.json.get('name', item.name)
+            item.cost = request.json.get('cost', item.cost)
+            item.description = request.json.get('description', item.description)
+            db.session.commit()
+            item = a_dict(item)
+            return jsonify({'updated item':item}), 200
+        except:
+            return jsonify('error occured when updating ', item), 400
 
     # delete a single item
     if request.method == 'DELETE':
