@@ -55,7 +55,6 @@ def update(itemName):
 
     # view a single Item
     if request.method == 'GET':
-        item = dict(item)
         return jsonify({
             'item': item
         })
@@ -82,7 +81,7 @@ def get(itemName):
     item = Item.query.filter(Item.name == itemName).all()
     if not item:
         return False
-    #item = item[0].to_dict()
+    item = item[0].to_dict()
     return item
 
 def dict(item):
