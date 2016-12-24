@@ -29,7 +29,7 @@ def index():
         if form.validate():
             # Check whether item exists
             name = request.json['name']
-            check_item = get(name)#Item.query.filter(Item.name==request.json['name']).all()
+            check_item = get(name)
             if check_item:
                 return jsonify(
                     '%r already exists in your system.' % name,
@@ -51,20 +51,20 @@ def update(itemName):
 
     if itemName == 'all':
         items = Item.query.all()
-        return jsonify([a_dict(item) for item in items])
+        return jsonify([a_dict(item) for item in items]), 200
 
     # get the Item from the database
     item = get(itemName)
     print(item)
     if not item:
-        return jsonify('%r not found in database.' % itemName)
+        return jsonify('%r not found in database.' % itemName), 400
 
     # view a single Item
     if request.method == 'GET':
         item = a_dict(item)
         return jsonify({
             'item': item
-        })
+        }), 200
 
     # update a single Item
     if request.method == 'PUT':
@@ -83,17 +83,16 @@ def update(itemName):
         try:
             db.session.delete(item)
             db.session.commit()
-            return jsonify('%r deleted from the database.' % itemName)
+            return jsonify('%r deleted from the database.' % itemName), 200
         except:
             return jsonify('error deleting %r from the database' % itemName,
-                            item)
+                            item), 400
 
 ## helper function
 def get(itemName):
     item = Item.query.filter_by(name=itemName).first()
     if not item:
         return False
-    #item = item[0].to_dict()
     return item
 
 def a_dict(item):
