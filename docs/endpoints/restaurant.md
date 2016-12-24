@@ -38,9 +38,9 @@
 ```JSON
 {
   "owner_id" : "integer: greater than 0",
- 	"name" : "string: min 3",
- 	"address" : "string: min 3",
- 	"restaurant_number" : "integer: greater than 0"
+  "name" : "string: min 3",
+  "address" : "string: min 3",
+  "restaurant_number" : "integer: greater than 0"
 }
 ```
 
@@ -96,9 +96,9 @@
 ```JSON
 {
   "owner_id" : "integer: greater than 0",
- 	"name" : "string: min 3",
- 	"address" : "string: min 3",
- 	"restaurant_number" : "integer: greater than 0"
+  "name" : "string: min 3",
+  "address" : "string: min 3",
+  "restaurant_number" : "integer: greater than 0"
 }
 ```
 
