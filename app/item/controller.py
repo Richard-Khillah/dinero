@@ -34,19 +34,30 @@ def index():
             name = request.json['name']
             check_item = get(name)
             if check_item:
-                return jsonify(
-                    '%r already exists in your system.' % name,{
-                    'item': a_dict(check_item)
-                    }), 400
+                return jsonify({
+                    'status': 'error',
+                    'message': '%r already exists in your system.' % name,
+                    'data': {
+                        'item in database': a_dict(check_item)
+                    }
+                }), 400
+
             #add item to database
             item = Item(request.json['name'], request.json['cost'], request.json['description'])
             db.session.add(item)
             db.session.commit()
-            return jsonify(
-                'Item added successfully.',
-                { 'added item': item.to_dict()
+            return jsonify({
+                'status': 'success',
+                'message': 'item added successfully.',
+                'data': {
+                    'added item': item.to_dict()
+                }
             }), 201
-        return jsonify({'message': 'There was an error adding data', 'error': form.errors}), 400
+        return jsonify({
+            'status': 'error',
+            'message': 'there was an error adding the item',
+            'error': form.errors
+        }), 400
 
 @itemMod.route('/<string:itemName>', methods=['GET', 'PUT', 'DELETE'])
 def update(itemName):
