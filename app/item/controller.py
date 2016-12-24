@@ -24,8 +24,8 @@ def index():
     # add item to database
     if request.method == 'POST':
         print("got into add_item()")
+        # validate the inputted information.
         form = ItemValidator(data=request.json)
-
         if form.validate():
             # Check whether item exists
             name = request.json['name']
@@ -39,7 +39,6 @@ def index():
             item = Item(request.json['name'], request.json['cost'], request.json['description'])
             db.session.add(item)
             db.session.commit()
-
             return jsonify(
                 'Item added successfully.',
                 { 'added item': item.to_dict()
@@ -48,12 +47,12 @@ def index():
 
 @itemMod.route('/<string:itemName>', methods=['GET', 'PUT', 'DELETE'])
 def update(itemName):
-
+    # Query all items in the database and return.
     if itemName == 'all':
         items = Item.query.all()
         return jsonify([a_dict(item) for item in items]), 200
 
-    # get the Item from the database
+    # retrieve and verify the existence of the Item from the database
     item = get(itemName)
     print(item)
     if not item:
@@ -88,12 +87,15 @@ def update(itemName):
             return jsonify('error deleting %r from the database' % itemName,
                             item), 400
 
-## helper function
+## helper functions
+# Query itemName and return the item to the caller.
+# if an item with `itemName` is not found in the database, return False
 def get(itemName):
     item = Item.query.filter_by(name=itemName).first()
     if not item:
         return False
     return item
 
+# Serialize the information passed in as item.
 def a_dict(item):
     return item.to_dict()
