@@ -48,6 +48,9 @@ def index():
 @itemMod.route('/<string:itemName>', methods=['GET', 'PUT', 'DELETE'])
 def update(itemName):
     #get the Item.
+    #item = Item.query.filter(Item.name == itemName).first()
+    #if not item:
+    #    return jsonify('%r not found in database.' % itemName)
     item = get(itemName)
     print(item)
     if not item:
@@ -55,6 +58,7 @@ def update(itemName):
 
     # view a single Item
     if request.method == 'GET':
+        item = a_dict(item)
         return jsonify({
             'item': item
         })
@@ -70,26 +74,16 @@ def update(itemName):
             db.session.commit()
             return jsonify('%r deleted from the database.' % itemName)
         except:
-            return jsonify(item)
+            return jsonify('error deleting %r from the database' % itemName,
+                            item)
 
 ## helper function
 def get(itemName):
-    """
-    if itemName == "":
-        return jsonify('error: itemName must not be a null string argument'), 404
-    """
-    item = Item.query.filter(Item.name == itemName).all()
+    item = Item.query.filter_by(name=itemName).first()
     if not item:
         return False
-    item = item[0].to_dict()
+    #item = item[0].to_dict()
     return item
 
 def a_dict(item):
-    return item[0].to_dict()
-
-    """
-    return jsonify({
-        'message': 'inside view!',
-        'item': item
-    }), 201
-    """
+    return item.to_dict()
