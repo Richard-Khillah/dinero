@@ -18,7 +18,7 @@ def index():
     #index page
     if request.method == 'GET':
         # Query all items in the database and return.
-        items = Item.query.all()
+        items = get('all_items')
         return jsonify({
             'status': 'success',
             'data': [a_dict(item) for item in items]
@@ -94,25 +94,37 @@ def update(itemId):
     if request.method == 'PUT':
         form = ItemValidator(data=request.json)
         if form.validate():
-            try:
-                item.name = request.json.get('name', item.name)
-                item.cost = request.json.get('cost', item.cost)
-                item.description = request.json.get('description', item.description)
-                db.session.commit()
-                item = a_dict(item)
-                return jsonify({
-                    'status': 'success',
-                    'message': 'updated item',
-                    'data': item
-                }), 200
-            except:
-                return jsonify({
-                    'status': 'error',
-                    'messge': 'error occured when updating item',
-                    'error': {
-                        'key': ['errors']
-                    }
-                }), 400
+            # create a new Item() and verify that the update is indeed an update
+            # an not a duplication of an item already in the database.
+            # if the item item being updated in the database is indeed an attempt
+            # to duplicate, reroute user to update form, displying current item
+            # at the top of the page.
+            updated_item_exists = get(request.json['name'])
+            if not updated_item_exists:
+                try:
+                    item.name = request.json.get('name', item.name)
+                    item.cost = request.json.get('cost', item.cost)
+                    item.description = request.json.get('description', item.description)
+                    db.session.commit()
+                    item = a_dict(item)
+                    return jsonify({
+                        'status': 'success',
+                        'message': 'updated item',
+                        'data': item
+                    }), 200
+                except:
+                    return jsonify({
+                        'status': 'error',
+                        'messge': 'error occured when updating item',
+                        'error': {
+                            'key': ['errors']
+                        }
+                    }), 400
+            return jsonify({
+                'status': 'error',
+                'message': 'An item with that name already exists in your database',
+
+            })
         return jsonify({
             'status': 'error',
             'message': 'there was an error with form validation',
@@ -141,7 +153,10 @@ def update(itemId):
 # Query itemId and return the item to the caller.
 # if an item with `itemId` is not found in the database, return False
 def get(arg):
-    if type(arg) is str:
+    if arg == 'all_items':
+        item = Item.query.all()
+        print(item)
+    elif type(arg) is str:
         item = Item.query.filter_by(name=arg).first()
     elif type(arg) is int:
         item = Item.query.filter_by(id=arg).first()
