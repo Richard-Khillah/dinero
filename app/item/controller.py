@@ -21,7 +21,7 @@ def index():
         items = get('all_items')
         return jsonify({
             'status': 'success',
-            'data': [a_dict(item) for item in items]
+            'data': [repr(item) for item in items]
         }), 200
 
     # add item to database
@@ -155,7 +155,7 @@ def update(itemId):
 def get(arg):
     if arg == 'all_items':
         item = Item.query.all()
-        print(item)
+        #print(item)
     elif type(arg) is str:
         item = Item.query.filter_by(name=arg).first()
     elif type(arg) is int:
