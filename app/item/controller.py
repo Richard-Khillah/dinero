@@ -100,7 +100,12 @@ def update(itemId):
             # to duplicate, reroute user to update form, displying current item
             # at the top of the page.
             updated_item_exists = get(request.json['name'])
-            if not updated_item_exists:
+            name = request.json['name']
+            cost = request.json['cost']
+            description = request.json['description']
+
+            if not exists(id=itemId, name=name, cost=cost, description=description):
+            #if not updated_item_exists:
                 try:
                     item.name = request.json.get('name', item.name)
                     item.cost = request.json.get('cost', item.cost)
@@ -120,11 +125,11 @@ def update(itemId):
                             'key': ['errors']
                         }
                     }), 400
-            return jsonify({
-                'status': 'error',
-                'message': 'An item with that name already exists in your database',
-
-            })
+            else:
+                return jsonify({
+                    'status': 'error',
+                    'message': 'Similar Items seem to exist'
+                })
         return jsonify({
             'status': 'error',
             'message': 'there was an error with form validation',
@@ -167,3 +172,20 @@ def get(arg):
 # Serialize the information passed in as item.
 def a_dict(item):
     return item.to_dict()
+
+def exists(**kwargs):
+    #item = Item.query.filter_by(**kwargs)
+    kid = kwargs['id']
+    kname = kwargs['name']
+    kcost = kwargs['cost']
+    kdescription = kwargs['description']
+
+    # query all items with the same name.
+    items = Item.query.filter_by(name=kname).all()
+    for item in items:
+        item = a_dict(item)
+        if not item['id'] == kid:
+        # look for items with the same name and description
+            if item['description'] == kdescription:
+                return True
+    return False
