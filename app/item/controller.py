@@ -107,9 +107,12 @@ def update(itemId):
             if not exists(id=itemId, name=name, cost=cost, description=description):
             #if not updated_item_exists:
                 try:
-                    item.name = request.json.get('name', item.name)
-                    item.cost = request.json.get('cost', item.cost)
-                    item.description = request.json.get('description', item.description)
+                    #item.name = request.json.get('name', item.name)
+                    #item.cost = request.json.get('cost', item.cost)
+                    #item.description = request.json.get('description', item.description)
+                    item.name = name
+                    item.cost = cost
+                    item.description = description
                     db.session.commit()
                     item = a_dict(item)
                     return jsonify({
