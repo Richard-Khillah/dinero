@@ -24,4 +24,3 @@ class Item(db.Model):
     def __repr__(self):
         #TODO #'<Item %r>' % self.name
         return '<Item %r $%f %r>' % (self.name, self.cost, self.description)
-        

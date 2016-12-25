@@ -18,7 +18,7 @@ def index():
     #index page
     if request.method == 'GET':
         # Query all items in the database and return.
-        items = Item.query.all()
+        items = get('all_items')
         return jsonify({
             'status': 'success',
             'data': [a_dict(item) for item in items]
@@ -68,15 +68,15 @@ def index():
             'error': form.errors
         }), 400
 
-@itemMod.route('/<string:itemName>', methods=['GET', 'PUT', 'DELETE'])
-def update(itemName):
+@itemMod.route('/<int:itemId>', methods=['GET', 'PUT', 'DELETE'])
+def update(itemId):
     # retrieve and verify the existence of the Item from the database
-    item = get(itemName)
+    item = get(itemId)
     print(item)
     if not item:
         return jsonify({
             'status': 'error',
-            'message': '%r not found in database.' % itemName
+            'message': 'item %d not found in database.' % itemId
         }), 400
 
     # view a single Item
@@ -92,30 +92,44 @@ def update(itemName):
 
     # update a single Item
     if request.method == 'PUT':
-        try:
-            item.name = request.json.get('name', item.name)
-            item.cost = request.json.get('cost', item.cost)
-            item.description = request.json.get('description', item.description)
-            db.session.commit()
-            item = a_dict(item)
-            return jsonify({
-                'status': 'success',
-                'message': 'updated item',
-                'data': item
-            }), 200
-        except:
+        form = ItemValidator(data=request.json)
+        if form.validate():
+            # create a new Item() and verify that the update is indeed an update
+            # an not a duplication of an item already in the database.
+            # if the item item being updated in the database is indeed an attempt
+            # to duplicate, reroute user to update form, displying current item
+            # at the top of the page.
+            updated_item_exists = get(request.json['name'])
+            if not updated_item_exists:
+                try:
+                    item.name = request.json.get('name', item.name)
+                    item.cost = request.json.get('cost', item.cost)
+                    item.description = request.json.get('description', item.description)
+                    db.session.commit()
+                    item = a_dict(item)
+                    return jsonify({
+                        'status': 'success',
+                        'message': 'updated item',
+                        'data': item
+                    }), 200
+                except:
+                    return jsonify({
+                        'status': 'error',
+                        'messge': 'error occured when updating item',
+                        'error': {
+                            'key': ['errors']
+                        }
+                    }), 400
             return jsonify({
                 'status': 'error',
-                'messge': 'error occured when updating item',
-                'error': {
-                    'key': ['errors']
-                }
-            }), 400
-    return jsonify({
-        'status': 'error',
-        'message': 'there was an error with form validation',
-        'error': form.errors
-    }), 400
+                'message': 'An item with that name already exists in your database',
+
+            })
+        return jsonify({
+            'status': 'error',
+            'message': 'there was an error with form validation',
+            'error': form.errors
+        }), 400
 
     # delete a single item
     if request.method == 'DELETE':
@@ -124,7 +138,7 @@ def update(itemName):
             db.session.commit()
             return jsonify({
                 'status': 'success',
-                'message': '%r deleted from the database.' % itemName,
+                'message': '%d deleted from the database.' % itemId,
             }), 200
         except:
             return jsonify({
@@ -136,10 +150,16 @@ def update(itemName):
             }), 400
 
 ## helper functions
-# Query itemName and return the item to the caller.
-# if an item with `itemName` is not found in the database, return False
-def get(itemName):
-    item = Item.query.filter_by(name=itemName).first()
+# Query itemId and return the item to the caller.
+# if an item with `itemId` is not found in the database, return False
+def get(arg):
+    if arg == 'all_items':
+        item = Item.query.all()
+        print(item)
+    elif type(arg) is str:
+        item = Item.query.filter_by(name=arg).first()
+    elif type(arg) is int:
+        item = Item.query.filter_by(id=arg).first()
     if not item:
         return False
     return item
