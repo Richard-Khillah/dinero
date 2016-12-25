@@ -21,7 +21,6 @@ def index():
         items = get('all_items')
         return jsonify({
             'status': 'success',
-            #'data': [a_dict(item) for item in items]
             'data': [repr(item) for item in items]
         }), 200
 

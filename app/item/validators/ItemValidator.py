@@ -1,9 +1,9 @@
 from wtforms import Form, StringField, IntegerField, FloatField, validators
 
 class ItemValidator(Form):
-    restaurant_number = IntegerField('Restaurant id', [
+    restaurant_id = IntegerField('Restaurant id', [
         validators.DataRequired(),
-        validators.NumberRange(min=1, message='Restaurant number must be greater than 0.')
+        validators.NumberRange(min=1, message='Restaurant id must be greater than 0.')
     ])
 
     name = StringField('Name', [
