@@ -68,15 +68,15 @@ def index():
             'error': form.errors
         }), 400
 
-@itemMod.route('/<string:itemName>', methods=['GET', 'PUT', 'DELETE'])
-def update(itemName):
+@itemMod.route('/<int:itemId>', methods=['GET', 'PUT', 'DELETE'])
+def update(itemId):
     # retrieve and verify the existence of the Item from the database
-    item = get(itemName)
+    item = get(itemId)
     print(item)
     if not item:
         return jsonify({
             'status': 'error',
-            'message': '%r not found in database.' % itemName
+            'message': 'item %d not found in database.' % itemId
         }), 400
 
     # view a single Item
@@ -92,30 +92,32 @@ def update(itemName):
 
     # update a single Item
     if request.method == 'PUT':
-        try:
-            item.name = request.json.get('name', item.name)
-            item.cost = request.json.get('cost', item.cost)
-            item.description = request.json.get('description', item.description)
-            db.session.commit()
-            item = a_dict(item)
-            return jsonify({
-                'status': 'success',
-                'message': 'updated item',
-                'data': item
-            }), 200
-        except:
-            return jsonify({
-                'status': 'error',
-                'messge': 'error occured when updating item',
-                'error': {
-                    'key': ['errors']
-                }
-            }), 400
-    return jsonify({
-        'status': 'error',
-        'message': 'there was an error with form validation',
-        'error': form.errors
-    }), 400
+        form = ItemValidator(data=request.json)
+        if form.validate():
+            try:
+                item.name = request.json.get('name', item.name)
+                item.cost = request.json.get('cost', item.cost)
+                item.description = request.json.get('description', item.description)
+                db.session.commit()
+                item = a_dict(item)
+                return jsonify({
+                    'status': 'success',
+                    'message': 'updated item',
+                    'data': item
+                }), 200
+            except:
+                return jsonify({
+                    'status': 'error',
+                    'messge': 'error occured when updating item',
+                    'error': {
+                        'key': ['errors']
+                    }
+                }), 400
+        return jsonify({
+            'status': 'error',
+            'message': 'there was an error with form validation',
+            'error': form.errors
+        }), 400
 
     # delete a single item
     if request.method == 'DELETE':
@@ -124,7 +126,7 @@ def update(itemName):
             db.session.commit()
             return jsonify({
                 'status': 'success',
-                'message': '%r deleted from the database.' % itemName,
+                'message': '%d deleted from the database.' % itemId,
             }), 200
         except:
             return jsonify({
@@ -136,13 +138,13 @@ def update(itemName):
             }), 400
 
 ## helper functions
-# Query itemName and return the item to the caller.
-# if an item with `itemName` is not found in the database, return False
+# Query itemId and return the item to the caller.
+# if an item with `itemId` is not found in the database, return False
 def get(arg):
     if type(arg) is str:
         item = Item.query.filter_by(name=arg).first()
     elif type(arg) is int:
-        item = Item.query.filter_by(id=arg)
+        item = Item.query.filter_by(id=arg).first()
     if not item:
         return False
     return item
