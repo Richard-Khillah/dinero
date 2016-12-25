@@ -1,3 +1,24 @@
+# Dinero app
+
+
+## Setup dev environment
+
+```bash
+pip install -r requirements.txt
+```
+
+To create the database,
+
+In the main directory run
+```bash
+./initdb.sh
+```
+
+---
+
+
+
+
 A bit of restructuring has been done, and it might be confusing to look at.
 I'll do my best to walk you though.
 
@@ -84,24 +105,3 @@ Note, make sure you have the ::req::``/Flask-SQLAlchemy==2.1`` installed
   /Resturant.py = Resturant model
 
 ---
-
-# Setup dev enviornment
-
-```bash
-pip install -r requirements.txt
-```
-
-To create the database,
-
-In the main directory run
-```bash
-python shell.py
-```
-
-In the python shell
-
-```python
-from app import db
-
-db.create_all()
-```
