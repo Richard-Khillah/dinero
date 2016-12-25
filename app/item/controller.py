@@ -138,8 +138,11 @@ def update(itemName):
 ## helper functions
 # Query itemName and return the item to the caller.
 # if an item with `itemName` is not found in the database, return False
-def get(itemName):
-    item = Item.query.filter_by(name=itemName).first()
+def get(arg):
+    if type(arg) is str:
+        item = Item.query.filter_by(name=arg).first()
+    elif type(arg) is int:
+        item = Item.query.filter_by(id=arg)
     if not item:
         return False
     return item
