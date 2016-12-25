@@ -126,9 +126,10 @@ def update(itemId):
                         }
                     }), 400
             else:
-                if len(found_items) > 1:
-                    message = "Simlar items seem to exist"
-                message = "A similar item seems to exists"
+                numberItems = len(found_items)
+                if numberItems > 1:
+                    message = "%d simlar items seem to exist." % numberItems
+                message = "1 similar item seems to exists"
 
                 return jsonify({
                     'status': 'error',
