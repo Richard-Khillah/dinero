@@ -38,7 +38,7 @@ def index():
                     'status': 'error',
                     'message': '%r already exists in your system.' % name,
                     'data': {
-                        'item in database': a_dict(check_item)
+                        'item in database': serialize(check_item)
                     }
                 }), 400
 
@@ -51,7 +51,7 @@ def index():
                     'status': 'success',
                     'message': 'item added successfully.',
                     'data': {
-                        'added item': item.to_dict()
+                        'added item': item.serialize()
                     }
                 }), 201
             except:
@@ -81,7 +81,7 @@ def update(itemId):
 
     # view a single Item
     if request.method == 'GET':
-        item = a_dict(item)
+        item = serialize(item)
         return jsonify({
             'status': 'success',
             'message': 'found item successfully',
@@ -94,27 +94,24 @@ def update(itemId):
     if request.method == 'PUT':
         form = ItemValidator(data=request.json)
         if form.validate():
-            # create a new Item() and verify that the update is indeed an update
-            # an not a duplication of an item already in the database.
-            # if the item item being updated in the database is indeed an attempt
-            # to duplicate, reroute user to update form, displying current item
-            # at the top of the page.
-            updated_item_exists = get(request.json['name'])
+            # cVerify that the update is indeed an update and not a duplication
+            # of an item already in the database. If the item item being updated
+            # in the database is indeed an attempt to duplicate, reroute user to
+            # update form, displying current item at the top of the page.
             name = request.json['name']
             cost = request.json['cost']
             description = request.json['description']
 
-            if not exists(id=itemId, name=name, cost=cost, description=description):
-            #if not updated_item_exists:
+            found_items = items_with_same(itemId, name)
+
+            if not found_items:
                 try:
-                    #item.name = request.json.get('name', item.name)
-                    #item.cost = request.json.get('cost', item.cost)
-                    #item.description = request.json.get('description', item.description)
                     item.name = name
                     item.cost = cost
                     item.description = description
                     db.session.commit()
-                    item = a_dict(item)
+                    item = serialize(item)
+
                     return jsonify({
                         'status': 'success',
                         'message': 'updated item',
@@ -123,15 +120,20 @@ def update(itemId):
                 except:
                     return jsonify({
                         'status': 'error',
-                        'messge': 'error occured when updating item',
+                        'message': 'error occured when updating item',
                         'error': {
                             'key': ['errors']
                         }
                     }), 400
             else:
+                if len(found_items) > 1:
+                    message = "Simlar items seem to exist"
+                message = "A similar item seems to exists"
+
                 return jsonify({
                     'status': 'error',
-                    'message': 'Similar Items seem to exist'
+                    'message': message,
+                    'similar item(s)': found_item_serialize(found_items)
                 })
         return jsonify({
             'status': 'error',
@@ -173,22 +175,29 @@ def get(arg):
     return item
 
 # Serialize the information passed in as item.
-def a_dict(item):
-    return item.to_dict()
+def serialize(item):
+    return item.serialize()
 
-def exists(**kwargs):
-    #item = Item.query.filter_by(**kwargs)
-    kid = kwargs['id']
-    kname = kwargs['name']
-    kcost = kwargs['cost']
-    kdescription = kwargs['description']
+def items_with_same(id, name):
+    items = Item.query.filter_by(name=name).all()
+    found_items = {} # empty dictionary to add any item that might be duplicates
+    count = 0 # var to keep track of how many similar items there are
 
-    # query all items with the same name.
-    items = Item.query.filter_by(name=kname).all()
     for item in items:
-        item = a_dict(item)
-        if not item['id'] == kid:
-        # look for items with the same name and description
-            if item['description'] == kdescription:
-                return True
-    return False
+        if not item.id == id:
+            count += 1
+            found_items[count] = serialize(item)
+    return found_items
+
+def found_item_serialize(found_items):
+    list_of_items = []
+    for key, value in found_items.items():
+        #value = serialize(value)
+        list_of_items.append({
+            'found item #' : key,
+            'id': value['id'],
+            'name': value['name'],
+            'cost': value['cost'],
+            'description': value['description']
+        })
+    return list_of_items
