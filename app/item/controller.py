@@ -1,6 +1,5 @@
 from flask import Blueprint, request, g, redirect, url_for, jsonify
 from datetime import datetime, timedelta
-import pprint
 
 from app import db
 from app.item.models.Item import Item
