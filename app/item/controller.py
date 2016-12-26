@@ -26,6 +26,7 @@ def index():
         }), 200
 
     # add item to database
+    #TODO update add() with found_items `eq`
     if request.method == 'POST':
         print("got into add_item()")
         # validate the inputted information.
@@ -142,9 +143,6 @@ def update(itemId):
                 # exists in the database.
                 (message, same_named_items, same_descriptioned_items) = construct_return_package(found_items)
 
-                #if same_named_items == same_descriptioned_items:
-                #    print("__eq__ worked!")
-
                 return jsonify({
                     'status': 'error',
                     'message': message,
@@ -198,28 +196,44 @@ def get(arg):
 def serialize(item):
     return item.to_dict()
 
-def items_with_same(name, description, *id):
+def items_with_same(name, description, *iid):
     print("enter items_with_same()")
     count = 0 # Number of potential duplicates
 
     same_name_item_list = Item.query.filter_by(name=name).all()
     same_name_dict = {} # empty dictionary to add any item that might be duplicates
+    if iid:
+        id = iid[0]
+
     for item in same_name_item_list:
+        # items should be unique
         if not item.id == id:
+            print('item.id = %d and id = %d' % (item.id, id))
+            print(item.id == iid)
+            print("type item.id = " + str(type(item.id)) + " and type iid = " + str(type(id)))
             count += 1
             same_name_dict[count] = serialize(item)
 
     same_description_item_list = Item.query.filter_by(description=description).all()
     same_description_dict = {}
     for item in same_description_item_list:
-        if not item.id == id:
+        # items should be unique
+        if not item.id == iid:
+            print('item.id = %d and id = %d' % (item.id, id))
+            print(item.id == id)
+            print("type item.id = " + str(type(item.id)) + " and type iid = " + str(type(id)))
             count += 1
             same_description_dict[count] = serialize(item)
     print("same name " + repr(same_name_dict))
     print("same desc " + repr(same_description_dict))
 
+    if same_name_dict == same_description_dict:
+        eq = True
+    eq = False
     #return both lists to the caller.
-    return same_name_dict, same_description_dict
+    return same_name_dict, same_description_dict, eq
+    #TODO update 'PUT' found_items
+    #TODO ensureif not any() still operates accurately
 
 def serialize_found(items):
     list_of_items = []
@@ -234,7 +248,7 @@ def serialize_found(items):
     return list_of_items
 
 def construct_return_package(found_items):
-    same_named_items, same_descriptioned_items = found_items
+    same_named_items, same_descriptioned_items, eq = found_items
     num_same_name_items = len(same_named_items)
     num_same_description_items = len(same_descriptioned_items)
 
