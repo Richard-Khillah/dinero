@@ -21,7 +21,7 @@ def index():
         items = get('all_items')
         return jsonify({
             'status': 'success',
-            'data': [repr(item) for item in items]
+            'data': [str(item) for item in items]
         }), 200
 
     # add item to database
@@ -102,8 +102,8 @@ def update(itemId):
             cost = request.json['cost']
             description = request.json['description']
 
-            found_items = items_with_same(itemId, name)
-
+            found_items = items_with_same(itemId, name, description)
+            print(found_items)
             if not found_items:
                 try:
                     item.name = name
@@ -126,15 +126,38 @@ def update(itemId):
                         }
                     }), 400
             else:
-                numberItems = len(found_items)
-                if numberItems > 1:
-                    message = "%d simlar items seem to exist." % numberItems
-                message = "1 similar item seems to exists"
+                # unpack tuple `found_items` and get lengths of sub_tuples
+                same_name, same_description = found_items
+                num_same_name = len(same_name)
+                num_same_description = len(same_description)
+
+                #message to be returned to the user
+                message = ""
+
+                if num_same_name:
+                    if num_same_name > 1:
+                        message = '%d items with the same name exists.' % num_same_name
+                        print("num_same_name > 1")
+                    message = '1 item with the same name exist'
+                    print("else num_same_name == 0")
+
+                if num_same_description:
+                    if num_same_description > 1 and num_same_name:
+                        message += 'and %d items with the same description esists' % num_same_description
+                    elif num_same_description > 1:
+                        message += '%d items with the same description exists' % num_same_description
+                    else:
+                        message = '1 item with the same description exists'
 
                 return jsonify({
                     'status': 'error',
                     'message': message,
-                    'similar item(s)': found_item_serialize(found_items)
+                    'data': {
+                        'items with same': {
+                            'name': found_item_serialize(same_name),
+                            'description': found_item_serialize(same_description)
+                        }
+                    }
                 })
         return jsonify({
             'status': 'error',
@@ -177,18 +200,28 @@ def get(arg):
 
 # Serialize the information passed in as item.
 def serialize(item):
-    return item.serialize()
+    return item.to_dict()
 
-def items_with_same(id, name):
-    items = Item.query.filter_by(name=name).all()
-    found_items = {} # empty dictionary to add any item that might be duplicates
+def items_with_same(id, name, description):
+    print("enter items_with_same()")
     count = 0 # var to keep track of how many similar items there are
 
-    for item in items:
+    same_name_item_list = Item.query.filter_by(name=name).all()
+    same_name_dict = {} # empty dictionary to add any item that might be duplicates
+    for item in same_name_item_list:
         if not item.id == id:
             count += 1
-            found_items[count] = serialize(item)
-    return found_items
+            print("snItem %d" % count)
+            same_name_dict[count] = serialize(item)
+
+    same_description_item_list = Item.query.filter_by(description=description).all()
+    same_description_dict = {}
+    for item in same_description_item_list:
+        if not item.id == id:
+            count += 1
+            same_description[count] = serialize(item)
+    #return both lists to the caller.
+    return same_name, same_description
 
 def found_item_serialize(found_items):
     list_of_items = []
