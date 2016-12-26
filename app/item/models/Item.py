@@ -27,11 +27,3 @@ class Item(db.Model):
     def __repr__(self):
         return '<Item %d %r %f %r>' % \
                (self.id, self.name, self.cost, self.description)
-
-    def __eq__(self, other):
-        other = Item(other)
-        name = self.name == other.name
-        cost = self.cost == other.cost
-        description = self.description == other.description
-
-        return id and name and cost and description
