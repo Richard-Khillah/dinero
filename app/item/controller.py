@@ -131,35 +131,17 @@ def update(itemId):
             else:
                 #TODO hoist all of this into some handler function.
                 # unpack tuple `found_items` and get lengths of sub_tuples
-                same_name, same_description = found_items
-                num_same_name = len(same_name)
-                num_same_description = len(same_description)
 
                 #message to be returned to the user
-                message = ""
-
-                if num_same_name:
-                    if num_same_name > 1:
-                        message = '%d items with the same name exists.' % num_same_name
-                        print("num_same_name > 1")
-                    message = '1 item with the same name exist'
-                    print("else num_same_name == 0")
-
-                if num_same_description:
-                    if num_same_description > 1 and num_same_name:
-                        message += 'and %d items with the same description esists' % num_same_description
-                    elif num_same_description > 1:
-                        message += '%d items with the same description exists' % num_same_description
-                    else:
-                        message = '1 item with the same description exists'
+                message, same_named_items, same_descriptioned_items = construct_return_package(found_items)
 
                 return jsonify({
                     'status': 'error',
                     'message': message,
                     'data': {
                         'items with same': {
-                            'name': found_item_serialize(same_name),
-                            'description': found_item_serialize(same_description)
+                            'name': serialize_found(same_named_items),
+                            'description': serialize_found(same_descriptioned_items)
                         }
                     }
                 })
@@ -224,13 +206,13 @@ def items_with_same(id, name, description):
     for item in same_description_item_list:
         if not item.id == id:
             count += 1
-            same_description[count] = serialize(item)
+            same_description_dict[count] = serialize(item)
     #return both lists to the caller.
-    return same_name, same_description
+    return same_name_dict, same_description_dict
 
-def found_item_serialize(found_items):
+def serialize_found(items):
     list_of_items = []
-    for key, value in found_items.items():
+    for key, value in items.items():
         #value = serialize(value)
         list_of_items.append({
             'found item #' : key,
@@ -240,3 +222,35 @@ def found_item_serialize(found_items):
             'description': value['description']
         })
     return list_of_items
+
+def construct_return_package(found_items):
+    same_named_items, same_descriptioned_items = found_items
+    num_same_name_items = len(same_named_items)
+    num_same_description_items = len(same_descriptioned_items)
+
+    #message to be returned to the user
+    message = ""
+
+    # put together same named items message
+    if same_named_items:
+        # add pluralized version of name message
+        if num_same_name_items > 1:
+            message = '%d items with the same name exists.' % num_same_name_items
+        # add singular version of name message
+        message = '1 item with the same name exist'
+        print("else num_same_name == 0")
+
+    # put together same descriptioned items message
+    if same_descriptioned_items:
+        # add pluralized version of description message
+        if num_same_description_items > 1 and same_named_items:
+            message += 'and %d items with the same description esists' % num_same_description_items
+        # add pluralized version of description message
+        elif num_same_description_items > 1:
+                message += '%d items with the same description exists' % num_same_description_items
+        # add singular version of description message
+        else:
+            message = '1 item with the same description exists'
+
+    # message will NOT be None
+    return message, same_named_items, same_descriptioned_items
