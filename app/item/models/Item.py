@@ -29,9 +29,9 @@ class Item(db.Model):
                (self.id, self.name, self.cost, self.description)
 
     def __eq__(self, other):
-        id == self.id == other.id
-        name == self.name == other.name
-        cost == self.cost == other.cost
-        description == self.description == other.description
+        other = Item(other)
+        name = self.name == other.name
+        cost = self.cost == other.cost
+        description = self.description == other.description
 
         return id and name and cost and description

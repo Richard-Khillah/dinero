@@ -201,7 +201,7 @@ def items_with_same(name, description, *iid):
     count = 0 # Number of potential duplicates
 
     same_name_item_list = Item.query.filter_by(name=name).all()
-    same_desc_item_list = Item.query.filter_by(name=name, description=description).all()
+    same_desc_item_list = Item.query.filter_by(description=description).all()
     all_items = same_name_item_list + same_desc_item_list
 
     for item in all_items:
@@ -212,20 +212,23 @@ def items_with_same(name, description, *iid):
     if iid:
         id = iid[0]
         mapped_ids = []
-
+        master_item = Item.query.filter_by(id=id).all()
         for item in all_items:
-            # items should be unique
-            if item.id not in mapped_ids:
-                if item.id == id:
-                    count += 1
-                    duplicate_item[count] = serialize(item)
-                elif item.name == name:
-                    count += 1
-                    same_name_dict[count] = serialize(item)
-                else:
-                    count += 1
-                    same_description_dict[count] = serialize(item)
-                mapped_ids.append(item.id)
+            item_id = item.id
+            if not item_id == id:
+                # items should be unique
+                if item.id not in mapped_ids:
+                    #if item.id == id:
+                    if item == master_item:
+                        count += 1
+                        duplicate_item[count] = serialize(item)
+                    elif item.name == name:
+                        count += 1
+                        same_name_dict[count] = serialize(item)
+                    else:
+                        count += 1
+                        same_description_dict[count] = serialize(item)
+                    mapped_ids.append(item.id)
 
         print("dup item " + repr(duplicate_item))
         print("same name " + repr(same_name_dict))
