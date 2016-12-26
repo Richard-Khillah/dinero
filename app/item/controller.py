@@ -11,6 +11,9 @@ from app.item.validators.ItemValidator import ItemValidator
 
 itemMod = Blueprint('item', __name__, url_prefix='/item')
 
+#TODO add in rollbacks
+#TODO perhaps alias db.sesssion
+
 ##index
 @itemMod.route('/', methods=['GET', 'POST'])
 def index():
@@ -125,6 +128,7 @@ def update(itemId):
                         }
                     }), 400
             else:
+                #TODO hoist all of this into some handler function.
                 # unpack tuple `found_items` and get lengths of sub_tuples
                 same_name, same_description = found_items
                 num_same_name = len(same_name)
