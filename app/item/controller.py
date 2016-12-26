@@ -227,11 +227,8 @@ def items_with_same(name, description, *iid):
     print("same name " + repr(same_name_dict))
     print("same desc " + repr(same_description_dict))
 
-    if same_name_dict == same_description_dict:
-        eq = True
-    eq = False
     #return both lists to the caller.
-    return same_name_dict, same_description_dict, eq
+    return same_name_dict, same_description_dict
     #TODO update 'PUT' found_items
     #TODO ensureif not any() still operates accurately
 
@@ -248,7 +245,7 @@ def serialize_found(items):
     return list_of_items
 
 def construct_return_package(found_items):
-    same_named_items, same_descriptioned_items, eq = found_items
+    same_named_items, same_descriptioned_items = found_items
     num_same_name_items = len(same_named_items)
     num_same_description_items = len(same_descriptioned_items)
 
