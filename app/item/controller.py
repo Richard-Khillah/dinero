@@ -147,6 +147,7 @@ def update(itemId):
                     'status': 'error',
                     'message': message,
                     'data': {
+                        'duplicate items': serialize_found(duplicate_item),
                         'items with same': {
                             'name': serialize_found(same_named_items),
                             'description': serialize_found(same_descriptioned_items)
@@ -253,27 +254,34 @@ def serialize_found(items):
 
 def construct_return_package(found_items):
     duplicate_item, same_named_items, same_descriptioned_items = found_items
+    num_duplicates = len(duplicate_item)
     num_same_name_items = len(same_named_items)
     num_same_description_items = len(same_descriptioned_items)
 
     message = ""
 
     # put together same named items message
+    if duplicate_item:
+        if num_duplicates > 1:
+            message += "There are %d duplicate items." % num_duplicates
+        message += "There is 1 duplicate item"
+
     if same_named_items:
-        # add pluralized version of name message
-        if num_same_name_items > 1:
-            message = '%d items with the same name' % num_same_name_items
-        # add singular version of name message
+        if duplicate_item:
+            # add pluralized version of name message
+            if num_same_name_items > 1:
+                message += ', %d items with the same name' % num_same_name_items
+            message += ', 1 item with the same name'
+            # add singular version of name message
         message = '1 item with the same name'
 
     # put together same descriptioned items message
     if same_descriptioned_items:
         # add pluralized version of description message
-        if num_same_description_items and same_named_items:
+        if duplicate_item or same_named_items:
             if num_same_description_items > 1:
                 message += ' and %d items with the same description' % num_same_description_items
             message += ' and %d item with the same description' % num_same_description_items
-
         # add singular version of description message
         else:
             message += '1 item with the same description'
