@@ -258,8 +258,9 @@ def construct_return_package(found_items):
     # put together same named items message
     if duplicate_item:
         if num_duplicates > 1:
-            message += "There are %d duplicate items." % num_duplicates
-        message += "There is 1 duplicate item"
+            message += "%d duplicate items" % num_duplicates
+        else:
+            message += "1 duplicate item"
 
     if same_named_items:
         if duplicate_item:
