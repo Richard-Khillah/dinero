@@ -63,12 +63,13 @@ def index():
                     }), 400
 
             else:
-                message, same_named_items, same_descriptioned_items = construct_return_package(found_items)
+                message, duplicate_item, same_named_items, same_descriptioned_items = construct_return_package(found_items)
 
                 return jsonify({
                     'status': 'error',
                     'message': message,
                     'data': {
+                        'duplicate items': serialize_found(duplicate_item),
                         'items with same': {
                             'name': serialize_found(same_named_items),
                             'description': serialize_found(same_descriptioned_items)
@@ -141,7 +142,7 @@ def update(itemId):
             else:
                 # Item is potentially duplicating an item that already
                 # exists in the database.
-                (message, duplicate_item, same_named_items, same_descriptioned_items) = construct_return_package(found_items)
+                message, duplicate_item, same_named_items, same_descriptioned_items = construct_return_package(found_items)
 
                 return jsonify({
                     'status': 'error',
@@ -205,8 +206,6 @@ def items_with_same(name, description, cost, *iid):
     same_desc_item_list = Item.query.filter_by(description=description).all()
     all_items = same_name_item_list + same_desc_item_list
 
-    for item in all_items:
-        print(serialize(item))
     duplicate_item = {}
     same_name_dict = {} # empty dictionary to add any item that might be duplicates
     same_description_dict = {}
@@ -230,10 +229,6 @@ def items_with_same(name, description, cost, *iid):
                         count += 1
                         same_description_dict[count] = serialize(item)
                     mapped_ids.append(item.id)
-
-        print("dup item " + repr(duplicate_item))
-        print("same name " + repr(same_name_dict))
-        print("same desc " + repr(same_description_dict))
 
     #return both lists to the caller.
     return duplicate_item, same_name_dict, same_description_dict
