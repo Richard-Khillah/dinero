@@ -7,9 +7,8 @@ from app.auth.models.User import User
 from app.item.validators.ItemValidator import ItemValidator
 #from app.auth.decorators import requires_login, requres_status_manager
 
-
-
 itemMod = Blueprint('item', __name__, url_prefix='/item')
+dbs = db.session
 
 #TODO add in rollbacks
 #TODO perhaps alias db.sesssion
@@ -47,8 +46,8 @@ def index():
             #add item to database
             try:
                 item = Item(request.json['name'], request.json['cost'], request.json['description'])
-                db.session.add(item)
-                db.session.commit()
+                dbs.add(item)
+                dbs.commit()
                 return jsonify({
                     'status': 'success',
                     'message': 'item added successfully.',
@@ -57,6 +56,7 @@ def index():
                     }
                 }), 201
             except:
+                dbs.rollback()
                 return jsonify({
                     'status': 'error',
                     'message': 'there was an error adding the item',
@@ -111,7 +111,7 @@ def update(itemId):
                     item.name = name
                     item.cost = cost
                     item.description = description
-                    db.session.commit()
+                    dbs.commit()
                     item = serialize(item)
 
                     return jsonify({
@@ -120,6 +120,7 @@ def update(itemId):
                         'data': item
                     }), 200
                 except:
+                    dbs.rollback()
                     return jsonify({
                         'status': 'error',
                         'message': 'error occured when updating item',
@@ -171,13 +172,14 @@ def update(itemId):
     # delete a single item
     if request.method == 'DELETE':
         try:
-            db.session.delete(item)
-            db.session.commit()
+            dbs.delete(item)
+            dbs.commit()
             return jsonify({
                 'status': 'success',
                 'message': '%d deleted from the database.' % itemId,
             }), 200
         except:
+            dbs.rollback()
             return jsonify({
                 'status': 'error',
                 'message': '%r not deleted.',
