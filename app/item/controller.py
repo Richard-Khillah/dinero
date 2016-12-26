@@ -110,7 +110,7 @@ def update(itemId):
             cost = request.json['cost']
             description = request.json['description']
 
-            found_items = items_with_same(name, description, itemId)
+            found_items = items_with_same(name, description, cost, itemId)
             print(found_items)
             # If no items were found in the database containing the same
             # description and/or name, then update the item accordingly.
@@ -196,7 +196,7 @@ def get(arg):
 def serialize(item):
     return item.to_dict()
 
-def items_with_same(name, description, *iid):
+def items_with_same(name, description, cost, *iid):
     print("enter items_with_same()")
     count = 0 # Number of potential duplicates
 
@@ -212,14 +212,14 @@ def items_with_same(name, description, *iid):
     if iid:
         id = iid[0]
         mapped_ids = []
-        master_item = Item.query.filter_by(id=id).all()
         for item in all_items:
             item_id = item.id
             if not item_id == id:
                 # items should be unique
                 if item.id not in mapped_ids:
-                    #if item.id == id:
-                    if item == master_item:
+                    equals = item.name == name and item.cost == cost and item.description == description
+
+                    if equals:
                         count += 1
                         duplicate_item[count] = serialize(item)
                     elif item.name == name:
