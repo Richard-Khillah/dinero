@@ -33,7 +33,10 @@ def index():
         if form.validate():
             # Check whether item exists
             name = request.json['name']
-            check_item = get(name)
+            cost = request.json['cost']
+            description = request.json['description']
+
+            found_items = items_with_same(itemId, name, description)
             if check_item:
                 return jsonify({
                     'status': 'error',
@@ -129,9 +132,6 @@ def update(itemId):
                         }
                     }), 400
             else:
-                #TODO hoist all of this into some handler function.
-                # unpack tuple `found_items` and get lengths of sub_tuples
-
                 #message to be returned to the user
                 message, same_named_items, same_descriptioned_items = construct_return_package(found_items)
 
@@ -176,7 +176,6 @@ def update(itemId):
 def get(arg):
     if arg == 'all_items':
         item = Item.query.all()
-        #print(item)
     elif type(arg) is str:
         item = Item.query.filter_by(name=arg).first()
     elif type(arg) is int:
@@ -185,7 +184,7 @@ def get(arg):
         return False
     return item
 
-# Serialize the information passed in as item.
+# Wrapper for .to_dict() from Items
 def serialize(item):
     return item.to_dict()
 
