@@ -1,14 +1,16 @@
 import os
 import sys
 
-from flask import Flask, jsonify
+from flask import Flask, jsonify, request, g
 
 # extensions
 from flask_sqlalchemy import SQLAlchemy
 from flask_bcrypt import Bcrypt
+import jwt
 
-#config
+# config
 from config import config
+
 
 app = Flask(__name__)
 app.config.from_object(config['DEVELOPMENT'])
@@ -17,14 +19,46 @@ app.config.from_object(config['DEVELOPMENT'])
 db = SQLAlchemy(app)
 bcrypt = Bcrypt(app)
 
+# import models
+from app.auth.models.User import User
+
+# checks if request has auth token and if so adds user data to g.user
+@app.before_request
+def before_request():
+    if 'Authorization' in request.headers:
+        token = request.headers['Authorization'].split(' ')[1]
+        try:
+            payload = jwt.decode(token,app.config['SECRET_KEY'])
+
+            g.user = payload
+        except (jwt.DecodeError, jwt.ExpiredSignatureError):
+            return jsonify({'message' : 'Token is invalid'}), 401
+    else:
+        g.user = None
+
+
 # error handlers
 @app.errorhandler(404)
 def not_found(error):
-    return jsonify({'message' : 'Page not found'}), 404
+    return jsonify({
+        'status' : 'error',
+        'message' : 'Page not found'
+    }), 404
 
 @app.errorhandler(403)
 def error_forbidden(error):
-    return jsonify({'message' : 'You must login first'}), 403
+    return jsonify({
+        'status' : 'error',
+        'message' : 'You are not allowed'
+    }), 403
+
+@app.errorhandler(401)
+def error_unauthorized(error):
+    return jsonify({
+        'status' : 'error',
+        'message' : 'You must login first'
+    }), 401
+
 
 # Import routes
 from app.auth.controller import auth as authModule
