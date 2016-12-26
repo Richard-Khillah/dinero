@@ -141,7 +141,7 @@ def update(itemId):
             else:
                 # Item is potentially duplicating an item that already
                 # exists in the database.
-                (message, same_named_items, same_descriptioned_items) = construct_return_package(found_items)
+                (message, duplicate_item, same_named_items, same_descriptioned_items) = construct_return_package(found_items)
 
                 return jsonify({
                     'status': 'error',
@@ -201,34 +201,38 @@ def items_with_same(name, description, *iid):
     count = 0 # Number of potential duplicates
 
     same_name_item_list = Item.query.filter_by(name=name).all()
+    same_desc_item_list = Item.query.filter_by(name=name, description=description).all()
+    all_items = same_name_item_list + same_desc_item_list
+
+    for item in all_items:
+        print(serialize(item))
+    duplicate_item = {}
     same_name_dict = {} # empty dictionary to add any item that might be duplicates
+    same_description_dict = {}
     if iid:
         id = iid[0]
+        mapped_ids = []
 
-    for item in same_name_item_list:
-        # items should be unique
-        if not item.id == id:
-            print('item.id = %d and id = %d' % (item.id, id))
-            print(item.id == iid)
-            print("type item.id = " + str(type(item.id)) + " and type iid = " + str(type(id)))
-            count += 1
-            same_name_dict[count] = serialize(item)
+        for item in all_items:
+            # items should be unique
+            if item.id not in mapped_ids:
+                if item.id == id:
+                    count += 1
+                    duplicate_item[count] = serialize(item)
+                elif item.name == name:
+                    count += 1
+                    same_name_dict[count] = serialize(item)
+                else:
+                    count += 1
+                    same_description_dict[count] = serialize(item)
+                mapped_ids.append(item.id)
 
-    same_description_item_list = Item.query.filter_by(description=description).all()
-    same_description_dict = {}
-    for item in same_description_item_list:
-        # items should be unique
-        if not item.id == iid:
-            print('item.id = %d and id = %d' % (item.id, id))
-            print(item.id == id)
-            print("type item.id = " + str(type(item.id)) + " and type iid = " + str(type(id)))
-            count += 1
-            same_description_dict[count] = serialize(item)
-    print("same name " + repr(same_name_dict))
-    print("same desc " + repr(same_description_dict))
+        print("dup item " + repr(duplicate_item))
+        print("same name " + repr(same_name_dict))
+        print("same desc " + repr(same_description_dict))
 
     #return both lists to the caller.
-    return same_name_dict, same_description_dict
+    return duplicate_item, same_name_dict, same_description_dict
     #TODO update 'PUT' found_items
     #TODO ensureif not any() still operates accurately
 
@@ -245,7 +249,7 @@ def serialize_found(items):
     return list_of_items
 
 def construct_return_package(found_items):
-    same_named_items, same_descriptioned_items = found_items
+    duplicate_item, same_named_items, same_descriptioned_items = found_items
     num_same_name_items = len(same_named_items)
     num_same_description_items = len(same_descriptioned_items)
 
@@ -273,4 +277,4 @@ def construct_return_package(found_items):
     message += ' exists.'
 
     # message will NOT be None
-    return message, same_named_items, same_descriptioned_items
+    return message, duplicate_item, same_named_items, same_descriptioned_items
