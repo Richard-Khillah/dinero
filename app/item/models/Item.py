@@ -21,8 +21,9 @@ class Item(db.Model):
         }
         return item
 
-    def __repr__(self):
+    def __str__(self):
         return '<Item %d %r>' % (self.id, self.name)
         #return '<Item %r $%f %r>' % (self.name, self.cost, self.description)
-    def __str__(self):
-        return "Item %d %r" % (self.id, self.name)
+    def __repr__(self):
+        return '<Item %d %r %f %r>' % \
+               (self.id, self.name, self.cost, self.description)
