@@ -1,6 +1,8 @@
 from app import db
 from datetime import datetime
 
+from app.item.constants import Category
+
 class Item(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     #resturant_id = ()
@@ -19,7 +21,7 @@ class Item(db.Model):
         self.name = name
         self.cost = cost
         self.description = description
-        self.category = category
+        self.category = Category(category)
 
 
         # Admin details
@@ -35,13 +37,13 @@ class Item(db.Model):
             'name': self.name,
             'cost': self.cost,
             'description': self.description
-            'category' = self.category
+            'category': self.category
 
             # Admin details
-            #'created_by' = self.created_by
-            #'modified_by' = self.modified_by
-            #'date_created' = self.date_created
-            #'date_created' = self.date_created
+            #'created_by':self.created_by
+            #'modified_by': self.modified_by
+            #'date_created': self.date_created
+            #'date_created': self.date_created
 
         }
         return item
