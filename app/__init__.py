@@ -30,7 +30,9 @@ def before_request():
         try:
             payload = jwt.decode(token,app.config['SECRET_KEY'])
 
-            g.user = payload
+            user = User.query.get(payload['id'])
+
+            g.user = user
         except (jwt.DecodeError, jwt.ExpiredSignatureError):
             return jsonify({'message' : 'Token is invalid'}), 401
     else:
