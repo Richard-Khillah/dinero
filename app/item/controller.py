@@ -10,8 +10,9 @@ from app.item.validators.ItemValidator import ItemValidator
 itemMod = Blueprint('item', __name__, url_prefix='/item')
 dbs = db.session
 
-#TODO add in rollbacks
-#TODO perhaps alias db.sesssion
+#TODO Test items:
+        #rollback, duplicate items, user authentication
+#TODO Create Documentation
 
 ##index
 @itemMod.route('/', methods=['GET', 'POST'])
@@ -202,6 +203,7 @@ def items_with_same(name, description, cost, *iid):
     print("enter items_with_same()")
     count = 0 # Number of potential duplicates
 
+    #TODO rename variables
     same_name_item_list = Item.query.filter_by(name=name).all()
     same_desc_item_list = Item.query.filter_by(description=description).all()
     all_items = same_name_item_list + same_desc_item_list
