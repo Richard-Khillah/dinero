@@ -20,10 +20,10 @@ categories = {
 
 from enum import Enum
 class Category(Enum):
-    APPETIZER: 'appetizer',
-    SNACK: 'snack',
-    DESSERT: 'dessert',
-    BREAKFAST: 'breakfast',
-    LUNCH: 'lunch',
-    DINNER: 'dinner',
-    BEVERAGE: 'beverage'
+    APPETIZER = 'appetizer'
+    SNACK = 'snack'
+    DESSERT = 'dessert'
+    BREAKFAST = 'breakfast'
+    LUNCH = 'lunch'
+    DINNER = 'dinner'
+    BEVERAGE = 'beverage'
