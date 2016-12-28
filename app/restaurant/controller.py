@@ -113,6 +113,8 @@ def index_restaurant():
                 db.session.add(restaurant)
                 db.session.commit()
             except:
+                db.session.rollback()
+
                 return jsonify({
                     'status' : 'error',
                     'message' : 'There was a problem adding the restaurant',
@@ -189,6 +191,7 @@ def restaurant_view(restaurantId):
             db.session.delete(restaurants[0])
             db.session.commit()
         except:
+            db.session.rollback()
             return jsonify({
                 'status' : 'error',
                 'message' : 'There was a problem deleteing the restaurant',
@@ -257,6 +260,7 @@ def restaurant_view(restaurantId):
             try:
                 db.session.commit()
             except:
+                db.session.rollback()
                 return jsonify({
                     'status' : 'error',
                     'message' : 'There was a problem adding the restaurant',
