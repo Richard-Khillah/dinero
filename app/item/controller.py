@@ -1,11 +1,14 @@
 from flask import Blueprint, request, g, redirect, url_for, jsonify
-from datetime import datetime, timedelta
+#from datetime import datetime, timedelta
 
 from app import db
 from app.item.models.Item import Item
 from app.auth.models.User import User
 from app.item.validators.ItemValidator import ItemValidator
 #from app.auth.decorators import requires_login, requres_status_manager
+
+from app.auth import constants as USER
+from app.auth.decorators import requires_login
 
 from app.item.testFuncs import addTestItems
 
@@ -18,93 +21,143 @@ dbs = db.session
 
 ##index
 @itemMod.route('/<string:command>', methods=['GET', 'POST'])
+@requires_login
 def index(command):
+    # authorized status based on login informatoin
+    authorizedUser = g.user.role >= USER.MANAGER
+
+
     #index page
     if request.method == 'GET':
+        page = None
+        # check if user supplied a page number in query
+        if request.args.get('page', ''):
+            page = request.args.get('page', '')
+
+            # check if page is a number
+            try:
+                page = int(page)
+            except ValueError:
+                page = 1
+
+            if page < 0:
+                page = 1
+        else:
+            page = 1
+
+        ##Algorithm for user login.
+        """
+        # Query all items in the database and return.
+        if authorizedUser:
+            items = get('all_items')
+            return jsonify({
+                'status': 'success',
+                # Return allavailable information about all items
+                'data': [repr(item) for item in items]
+            }), 200
+        else:
+            items = get('all_items')
+            return jsonify({
+                'status': 'success',
+                #return only `menu style` information
+                'data': [str(item) for item in items]
+            }), 200
+        """
         # Query all items in the database and return.
         if command == 'test':
             items = get('all_items')
             return jsonify({
                 'status': 'success',
+                # Return allavailable information about all items
                 'data': [repr(item) for item in items]
             }), 200
         elif command == 'cust':
             items = get('all_items')
             return jsonify({
                 'status': 'success',
+                #return only `menu style` information
                 'data': [str(item) for item in items]
             }), 200
 
     # add item to database
-    #TODO update add() with found_items `eq`
     if request.method == 'POST':
         print("got into add_item()")
-        if command == 'test':
-            addTestItems()
+        if authorizedUser:
+            if command == 'test':
+                addTestItems()
 
-            items = get('all_items')
-            return jsonify({
-                'status': 'success',
-                'data': [str(item) for item in items]
-            }), 200
-        elif command == 'normal':
+                items = get('all_items')
+                return jsonify({
+                    'status': 'success',
+                    'data': [str(item) for item in items]
+                }), 200
+            elif command == 'normal':
 
-            # validate the inputted information.
-            form = ItemValidator(data=request.json)
-            if form.validate():
-                # Check whether item exists
-                name = request.json['name']
-                cost = request.json['cost']
-                description = request.json['description']
-                category = request.json['category']
+                # validate the inputted information.
+                form = ItemValidator(data=request.json)
+                if form.validate():
+                    # Check whether item exists
+                    name = request.json['name']
+                    cost = request.json['cost']
+                    description = request.json['description']
+                    category = request.json['category']
 
-                found_items = items_with_same(name, description, cost)#, itemId)
-                if not any(found_items):
-                    #add item to database
-                    try:
-                        item = Item(request.json['name'], request.json['cost'], request.json['description'], request.json['category'])
-                        dbs.add(item)
-                        dbs.commit()
-                        print("got to after commit")
-                        return jsonify({
-                            'status': 'success',
-                            'message': 'item added successfully.',
-                            'data': {
-                                'added item': serialize(item)
-                            }
-                        }), 201
-                    except:
-                        dbs.rollback()
+                    found_items = items_with_same(name, description, cost)#, itemId)
+                    if not any(found_items):
+                        #add item to database
+                        try:
+                            item = Item(request.json['name'], request.json['cost'], request.json['description'], request.json['category'])
+                            dbs.add(item)
+                            dbs.commit()
+                            print("got to after commit")
+                            return jsonify({
+                                'status': 'success',
+                                'message': 'item added successfully.',
+                                'data': {
+                                    'added item': serialize(item)
+                                }
+                            }), 201
+                        except:
+                            dbs.rollback()
+                            return jsonify({
+                                'status': 'error',
+                                'message': 'there was an error adding the item',
+                                'error': {
+                                    'key': ['errors here']
+                                }
+                            }), 400
+
+                    else:
+                        message, duplicate_item, same_named_items, same_descriptioned_items = construct_return_package(found_items)
+
                         return jsonify({
                             'status': 'error',
-                            'message': 'there was an error adding the item',
-                            'error': {
-                                'key': ['errors here']
+                            'message': message,
+                            'data': {
+                                'duplicate items': serialize_found(duplicate_item),
+                                'items with same': {
+                                    'name': serialize_found(same_named_items),
+                                    'description': serialize_found(same_descriptioned_items)
+                                }
                             }
                         }), 400
-
-                else:
-                    message, duplicate_item, same_named_items, same_descriptioned_items = construct_return_package(found_items)
-
                     return jsonify({
-                        'status': 'error',
-                        'message': message,
-                        'data': {
-                            'duplicate items': serialize_found(duplicate_item),
-                            'items with same': {
-                                'name': serialize_found(same_named_items),
-                                'description': serialize_found(same_descriptioned_items)
-                            }
-                        }
+                    'status': 'error',
+                    'message': 'there was an error with form validation',
+                    'error': form.errors
                     }), 400
-                return jsonify({
+        else:
+            return jsonify({
                 'status': 'error',
-                'message': 'there was an error with form validation',
-                'error': form.errors
-                }), 400
+                'message': 'You are not authorized to update items.',
+                'error': 'Forbidden Access'
+            })
 
 @itemMod.route('/<int:itemId>', methods=['GET', 'PUT', 'DELETE'])
 def update(itemId):
+    # authorized status based on login informatoin
+    authorizedUser = g.user.role >= USER.MANAGER
+
     # retrieve and verify the existence of the Item from the database
     if itemId:
         item = get(itemId)
@@ -127,95 +180,109 @@ def update(itemId):
 
     # update a single Item
     if request.method == 'PUT':
-        form = ItemValidator(data=request.json)
-        if form.validate():
-            name = request.json['name']
-            cost = request.json['cost']
-            description = request.json['description']
+        if authorizedUser:
+            form = ItemValidator(data=request.json)
+            if form.validate():
+                name = request.json['name']
+                cost = request.json['cost']
+                description = request.json['description']
 
-            found_items = items_with_same(name, description, cost, itemId)
-            print(found_items)
-            # If no items were found in the database containing the same
-            # description and/or name, then update the item accordingly.
-            # Otherwise, keep the Item intact as is, i.e. do not modify Item
-            #TODO add any()
-            if not any(found_items):
-                try:
-                    item.name = name
-                    item.cost = cost
-                    item.description = description
-                    dbs.commit()
-                    item = serialize(item)
+                found_items = items_with_same(name, description, cost, itemId)
+                print(found_items)
+                # If no items were found in the database containing the same
+                # description and/or name, then update the item accordingly.
+                # Otherwise, keep the Item intact as is, i.e. do not modify Item
+                #TODO add any()
+                if not any(found_items):
+                    try:
+                        item.name = name
+                        item.cost = cost
+                        item.description = description
+                        dbs.commit()
+                        item = serialize(item)
+
+                        return jsonify({
+                            'status': 'success',
+                            'message': 'updated item',
+                            'data': item
+                        }), 200
+                    except:
+                        dbs.rollback()
+                        return jsonify({
+                            'status': 'error',
+                            'message': 'error occured when updating item',
+                            'error': {
+                                'key': ['errors']
+                            }
+                        }), 400
+                else:
+                    # Item is potentially duplicating an item that already
+                    # exists in the database.
+                    message, duplicate_item, same_named_items, same_descriptioned_items = construct_return_package(found_items)
 
                     return jsonify({
+                        'status': 'error',
+                        'message': message,
+                        'data': {
+                            'duplicate items': serialize_found(duplicate_item),
+                            'items with same': {
+                                'name': serialize_found(same_named_items),
+                                'description': serialize_found(same_descriptioned_items)
+                            }
+                        }
+                    }), 400
+            return jsonify({
+                'status': 'error',
+                'message': 'there was an error with form validation',
+                'error': form.errors
+            }), 400
+        else:
+            return jsonify({
+                'status': 'error',
+                'message': 'You are not authorized to update information',
+                'error': 'Forbidden Access'
+            })
+
+    # delete a single item
+    if request.method == 'DELETE':
+        if authorizedUser:
+            if itemId == 0:
+                try:
+                    numDeleted = Item.query.delete()
+                    dbs.commit()
+                    return jsonify({
                         'status': 'success',
-                        'message': 'updated item',
-                        'data': item
-                    }), 200
+                        'message': '%d items successfully removed from the data base.' % numDeleted,
+                    }), 202
                 except:
                     dbs.rollback()
                     return jsonify({
                         'status': 'error',
-                        'message': 'error occured when updating item',
-                        'error': {
-                            'key': ['errors']
-                        }
-                    }), 400
-            else:
-                # Item is potentially duplicating an item that already
-                # exists in the database.
-                message, duplicate_item, same_named_items, same_descriptioned_items = construct_return_package(found_items)
+                        'message': 'there was an error deleting all items from the data base'
+                    }), 500
 
-                return jsonify({
-                    'status': 'error',
-                    'message': message,
-                    'data': {
-                        'duplicate items': serialize_found(duplicate_item),
-                        'items with same': {
-                            'name': serialize_found(same_named_items),
-                            'description': serialize_found(same_descriptioned_items)
-                        }
-                    }
-                }), 400
-        return jsonify({
-            'status': 'error',
-            'message': 'there was an error with form validation',
-            'error': form.errors
-        }), 400
-
-    # delete a single item
-    if request.method == 'DELETE':
-        if itemId == 0:
             try:
-                numDeleted = Item.query.delete()
+                dbs.delete(item)
                 dbs.commit()
                 return jsonify({
                     'status': 'success',
-                    'message': '%d items successfully removed from the data base.' % numDeleted,
-                }), 202
+                    'message': '%d deleted from the database.' % itemId,
+                }), 200
             except:
                 dbs.rollback()
                 return jsonify({
                     'status': 'error',
-                    'message': 'there was an error deleting all items from the data base'
-                }), 500
-
-        try:
-            dbs.delete(item)
-            dbs.commit()
-            return jsonify({
-                'status': 'success',
-                'message': '%d deleted from the database.' % itemId,
-            }), 200
-        except:
-            dbs.rollback()
+                    'message': '%r not deleted.',
+                    'errors': {
+                        'key': ['errors here']
+                    }
+                }), 400
+        else:
             return jsonify({
                 'status': 'error',
-                'message': '%r not deleted.',
-                'errors': {
-                    'key': ['errors here']
-                }
-            }), 400
+                'message': 'You are not authorized to update information',
+                'error': 'Forbidden Access'
+            })
 
 ## helper functions
 # Query itemId and return the item to the caller.
@@ -235,6 +302,7 @@ def get(arg):
 def serialize(item):
     return item.to_dict()
 
+#TODO move this to front end?
 def items_with_same(name, description, cost, *iid):
     print("enter items_with_same()")
     count = 0 # Number of potential duplicates
