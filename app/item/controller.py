@@ -20,7 +20,8 @@ dbs = db.session
 #TODO Create Documentation
 
 ##index
-@itemMod.route('/<string:command>', methods=['GET', 'POST'])
+@itemMod.route('/', defaults={'path': ''}, methods=['GET', 'POST'])
+@itemMod.route('/<path:path>')#, methods=['GET', 'POST'])
 @requires_login
 def index(command):
     # authorized status based on login informatoin
@@ -46,7 +47,7 @@ def index(command):
             page = 1
 
         ##Algorithm for user login.
-        """
+
         # Query all items in the database and return.
         if authorizedUser:
             items = get('all_items')
@@ -62,6 +63,7 @@ def index(command):
                 #return only `menu style` information
                 'data': [str(item) for item in items]
             }), 200
+
         """
         # Query all items in the database and return.
         if command == 'test':
@@ -78,7 +80,7 @@ def index(command):
                 #return only `menu style` information
                 'data': [str(item) for item in items]
             }), 200
-
+        """
     # add item to database
     if request.method == 'POST':
         print("got into add_item()")
@@ -89,7 +91,7 @@ def index(command):
                 items = get('all_items')
                 return jsonify({
                     'status': 'success',
-                    'data': [str(item) for item in items]
+                    'data': [repr(item) for item in items]
                 }), 200
             elif command == 'normal':
 

@@ -9,7 +9,7 @@ class User(db.Model):
     name = db.Column(db.String(50))
     username = db.Column(db.String(20), unique=True)
     email = db.Column(db.String(120), unique=True)
-    role = db.Column(db.SmallInteger, default=USER.CUSTOMER)
+    role = db.Column(db.SmallInteger, default=USER.ADMIN)
     _password = db.Column(db.String(120))
 
     restaurant_id = db.Column(db.Integer, db.ForeignKey('restaurant.id'))
