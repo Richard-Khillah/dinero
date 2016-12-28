@@ -21,7 +21,7 @@ dbs = db.session
 
 ##index
 @itemMod.route('/', methods=['GET', 'POST'], defaults={'path': ''})
-@itemMod.route('/<path:path>')
+@itemMod.route('/<path:path>', methods=['POST'])
 @requires_login
 def index(path):
     # authorized status based on login informatoin
