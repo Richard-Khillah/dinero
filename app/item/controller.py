@@ -19,14 +19,16 @@ dbs = db.session
         #rollback, duplicate items, user authentication
 #TODO Create Documentation
 
-##index
-@itemMod.route('/', defaults={'path': ''}, methods=['GET', 'POST'])
-@itemMod.route('/<path:path>')#, methods=['GET', 'POST'])
+
+@itemMod.route('/', methods=['GET', 'POST'], defaults={'path': ''})
+@itemMod.route('/<path:path>')
 @requires_login
 def index(path):
     # authorized status based on login informatoin
     authorizedUser = g.user.role >= USER.MANAGER
 
+    print(authorizedUser)
+    print("path = %r" % path)
 
     #index page
     if request.method == 'GET':
@@ -49,11 +51,26 @@ def index(path):
         # Query all items in the database and return.
         if authorizedUser:
             items = get('all_items')
+
             return jsonify({
                 'status': 'success',
                 # Return allavailable information about all items
                 'data': [repr(item) for item in items]
             }), 200
+
+            print('back in index(), GET, authorizedUser. items = ', items)
+            if items:
+                return jsonify({
+                    'status': 'success',
+                    # Return allavailable information about all items
+                    'data': [repr(item) for item in items]
+                }), 200
+            else:
+                return jsonify({
+                    'status': 'error',
+                    'message': 'no items found'
+                })
+
         else:
             items = get('all_items')
             return jsonify({
@@ -66,15 +83,17 @@ def index(path):
     if request.method == 'POST':
         print("got into add_item()")
         if authorizedUser:
-            if path == '/test':
+            if path == 'test':
                 addTestItems()
-
                 items = get('all_items')
+
                 return jsonify({
                     'status': 'success',
                     'data': [repr(item) for item in items]
                 }), 200
-            elif path == '/':
+
+            #elif path == '/':
+            elif not path:#path == '/':
                 # validate the inputted information.
                 form = ItemValidator(data=request.json)
                 if form.validate():
@@ -110,6 +129,7 @@ def index(path):
                                 }
                             }), 400
 
+                    # Items exist. Let user know
                     else:
                         message, duplicate_item, dup_named_itmes, same_descriptioned_items = construct_return_package(found_items)
 
@@ -124,11 +144,26 @@ def index(path):
                                 }
                             }
                         }), 400
+
                     return jsonify({
                     'status': 'error',
                     'message': 'there was an error with form validation',
                     'error': form.errors
                     }), 400
+
+                    # Was not able to process request
+                return jsonify({
+                'status': 'error',
+                'message': 'there was an error with form validation',
+                'error': form.errors
+                }), 400
+            else:
+                return jsonify({
+                    'status': 'error',
+                    'message': 'page not found.',
+                    'error': 'route(%r) not found.' % path
+                })
+
         else:
             return jsonify({
                 'status': 'error',
@@ -138,9 +173,15 @@ def index(path):
 
 @itemMod.route('/<int:itemId>', defaults={'path': ""}, methods=['GET', 'PUT', 'DELETE'])
 @itemMod.route('/<path:path>')
+
 def update(itemId):
     # authorized status based on login informatoin
     authorizedUser = g.user.role >= USER.MANAGER
+
+def update(itemId, path):
+    # authorized status based on login informatoin
+    authorizedUser = g.user.role >= USER.MANAGER
+    print("inside update()")
 
     # verify the existence of and retrieve the Item from the database
     if itemId:
@@ -294,11 +335,17 @@ def update(itemId):
 def get(arg):
     if arg == 'all_items':
         item = Item.query.all()
+    print("inside get(arg). arg = %r" % arg)
+    if arg == 'all_items':
+        print('inside all_items')
+        item = Item.query.all()
+        print('item = ', item)
     elif type(arg) is str:
         item = Item.query.filter_by(name=arg).first()
     elif type(arg) is int:
         item = Item.query.filter_by(id=arg).first()
     if not item:
+        print('return from get is false')
         return False
     return item
 
