@@ -7,12 +7,12 @@ from app.restaurant.models.Restaurant import Restaurant
 #from models import Restaurant
 from app.auth.models.User import User
 from app.restaurant.validators.RestaurantValidator import RestaurantValidator
-<<<<<<< HEAD
+
 #from validators.RestaurantValidator import RestaurantValidator
-=======
+
 from app.auth import constants as USER
 from app.auth.decorators import requires_login
->>>>>>> restaurant
+
 
 restaurantMod = Blueprint('restaurant', __name__, url_prefix='/restaurants')
 
