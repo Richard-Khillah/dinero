@@ -9,7 +9,7 @@ class Item(db.Model):
     name = db.Column(db.String(50))
     cost = db.Column(db.Float)
     description = db.Column(db.String(100)) #can be a db.Text() field
-    category = db.Column(db.String(25))
+    #category = db.Column(db.String(25))
 
     #created_by = db.Column(db.Integer)
     #modified_by = db.Column(db.Integer)
@@ -17,11 +17,12 @@ class Item(db.Model):
     #date_modified = db.Column(db.DateTime)
 
 
-    def __init__(self, name=None, cost=None, description=None, category=None, **kwargs):
+    def __init__(self, name=None, cost=None, description=None):#, category=None, **kwargs):
         self.name = name
         self.cost = cost
         self.description = description
-        self.category = Category(category)
+        #pass in the value for the Enum, i.e. a string, e.g. 'lunch'
+        #self.category = Category(category)
 
 
         # Admin details
@@ -36,8 +37,8 @@ class Item(db.Model):
             'id': self.id,
             'name': self.name,
             'cost': self.cost,
-            'description': self.description
-            'category': self.category
+            'description': self.description,
+            #'category': self.category
 
             # Admin details
             #'created_by':self.created_by

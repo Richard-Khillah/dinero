@@ -38,7 +38,7 @@ def index():
             cost = request.json['cost']
             description = request.json['description']
 
-            found_items = items_with_same(name, description)#, itemId)
+            found_items = items_with_same(name, description, cost)#, itemId)
             if not any(found_items):
                 #add item to database
                 try:
@@ -86,12 +86,13 @@ def index():
 @itemMod.route('/<int:itemId>', methods=['GET', 'PUT', 'DELETE'])
 def update(itemId):
     # retrieve and verify the existence of the Item from the database
-    item = get(itemId)
-    if not item:
-        return jsonify({
-            'status': 'error',
-            'message': 'item %d not found in database.' % itemId
-        }), 400
+    if itemId:
+        item = get(itemId)
+        if not item:
+            return jsonify({
+                'status': 'error',
+                'message': 'item %d not found in database.' % itemId
+            }), 400
 
     # view a single Item
     if request.method == 'GET':
@@ -164,6 +165,21 @@ def update(itemId):
 
     # delete a single item
     if request.method == 'DELETE':
+        if itemId == 0:
+            try:
+                numDeleted = Item.query.delete()
+                dbs.commit()
+                return jsonify({
+                    'status': 'success',
+                    'message': '%d items successfully removed from the data base.' % numDeleted,
+                }), 202
+            except:
+                dbs.rollback()
+                return jsonify({
+                    'status': 'error',
+                    'message': 'there was an error deleting all items from the data base'
+                }), 500
+
         try:
             dbs.delete(item)
             dbs.commit()
@@ -287,3 +303,14 @@ def construct_return_package(found_items):
 
     # message will NOT be None
     return message, duplicate_item, same_named_items, same_descriptioned_items
+
+def delete_all():
+    itemSet = dbs.query().all()
+    for item in itemSet:
+        try:
+            dbs.delete()
+        except:
+            dbs.rollback()
+            return False
+        dbs.commit()
+        return True
