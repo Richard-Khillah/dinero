@@ -22,3 +22,5 @@ class Category(Enum):
     LUNCH = 'lunch'
     DINNER = 'dinner'
     BEVERAGE = 'beverage'
+
+NUM_TEST_ITEMS = 15

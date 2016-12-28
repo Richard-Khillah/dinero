@@ -7,6 +7,8 @@ from app.auth.models.User import User
 from app.item.validators.ItemValidator import ItemValidator
 #from app.auth.decorators import requires_login, requres_status_manager
 
+from app.item.testFuncs import addTestItems
+
 itemMod = Blueprint('item', __name__, url_prefix='/item')
 dbs = db.session
 
@@ -15,8 +17,8 @@ dbs = db.session
 #TODO Create Documentation
 
 ##index
-@itemMod.route('/', methods=['GET', 'POST'])
-def index():
+@itemMod.route('/<string:command>', methods=['GET', 'POST'])
+def index(command):
     #index page
     if request.method == 'GET':
         # Query all items in the database and return.
@@ -30,58 +32,68 @@ def index():
     #TODO update add() with found_items `eq`
     if request.method == 'POST':
         print("got into add_item()")
-        # validate the inputted information.
-        form = ItemValidator(data=request.json)
-        if form.validate():
-            # Check whether item exists
-            name = request.json['name']
-            cost = request.json['cost']
-            description = request.json['description']
+        if command == 'test':
+            addTestItems()
 
-            found_items = items_with_same(name, description, cost)#, itemId)
-            if not any(found_items):
-                #add item to database
-                try:
-                    item = Item(request.json['name'], request.json['cost'], request.json['description'])
-                    dbs.add(item)
-                    dbs.commit()
-                    print("got to after commit")
-                    return jsonify({
-                        'status': 'success',
-                        'message': 'item added successfully.',
-                        'data': {
-                            'added item': serialize(item)
-                        }
-                    }), 201
-                except:
-                    dbs.rollback()
+            items = get('all_items')
+            return jsonify({
+                'status': 'success',
+                'data': [str(item) for item in items]
+            }), 200
+        else:
+
+            # validate the inputted information.
+            form = ItemValidator(data=request.json)
+            if form.validate():
+                # Check whether item exists
+                name = request.json['name']
+                cost = request.json['cost']
+                description = request.json['description']
+
+                found_items = items_with_same(name, description, cost)#, itemId)
+                if not any(found_items):
+                    #add item to database
+                    try:
+                        item = Item(request.json['name'], request.json['cost'], request.json['description'])
+                        dbs.add(item)
+                        dbs.commit()
+                        print("got to after commit")
+                        return jsonify({
+                            'status': 'success',
+                            'message': 'item added successfully.',
+                            'data': {
+                                'added item': serialize(item)
+                            }
+                        }), 201
+                    except:
+                        dbs.rollback()
+                        return jsonify({
+                            'status': 'error',
+                            'message': 'there was an error adding the item',
+                            'error': {
+                                'key': ['errors here']
+                            }
+                        }), 400
+
+                else:
+                    message, duplicate_item, same_named_items, same_descriptioned_items = construct_return_package(found_items)
+
                     return jsonify({
                         'status': 'error',
-                        'message': 'there was an error adding the item',
-                        'error': {
-                            'key': ['errors here']
+                        'message': message,
+                        'data': {
+                            'duplicate items': serialize_found(duplicate_item),
+                            'items with same': {
+                                'name': serialize_found(same_named_items),
+                                'description': serialize_found(same_descriptioned_items)
+                            }
                         }
                     }), 400
-
-            else:
-                message, duplicate_item, same_named_items, same_descriptioned_items = construct_return_package(found_items)
-
                 return jsonify({
-                    'status': 'error',
-                    'message': message,
-                    'data': {
-                        'duplicate items': serialize_found(duplicate_item),
-                        'items with same': {
-                            'name': serialize_found(same_named_items),
-                            'description': serialize_found(same_descriptioned_items)
-                        }
-                    }
+                'status': 'error',
+                'message': 'there was an error with form validation',
+                'error': form.errors
                 }), 400
-            return jsonify({
-            'status': 'error',
-            'message': 'there was an error with form validation',
-            'error': form.errors
-            }), 400
 
 @itemMod.route('/<int:itemId>', methods=['GET', 'PUT', 'DELETE'])
 def update(itemId):
