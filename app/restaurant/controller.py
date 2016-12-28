@@ -17,7 +17,6 @@ restaurantMod = Blueprint('restaurant', __name__, url_prefix='/restaurants')
 @requires_login
 def index_restaurant():
     if request.method == 'GET':
-
         page = None
         # check if user supplied a page number in query
         if request.args.get('page', ''):
@@ -36,12 +35,10 @@ def index_restaurant():
 
         restaurant_query = None
 
-        user = User.query.get(g.user['id'])
-
-        if user.role == USER.ADMIN:
+        if g.user.role == USER.ADMIN:
             restaurant_query = Restaurant.query.paginate(page,25,False)
-        elif user and user.role == USER.OWNER:
-            restaurant_query = Restaurant.query.join(Restaurant.owner, aliased=True).filter(User.id==user.id).paginate(page, 25,False)
+        elif g.user.role == USER.OWNER:
+            restaurant_query = Restaurant.query.join(Restaurant.owner, aliased=True).filter(User.id==g.user.id).paginate(page, 25,False)
         else:
             return jsonify({
                 'status' : 'error',
@@ -74,7 +71,6 @@ def index_restaurant():
     else: # POST request
         try:
             request.json["restaurant_number"] = int(request.json["restaurant_number"])
-            print(request.json['restaurant_number'])
         except:
             return jsonify({
                 'status' : 'error',
@@ -84,12 +80,12 @@ def index_restaurant():
                 'message' : 'There was a problem making the request.'
             }), 400
 
-        request.json['owner_id'] = g.user['id']
+        request.json['owner_id'] = g.user.id
 
         form = RestaurantValidator(data=request.json)
 
         if form.validate():
-            user = User.query.filter(User.id==g.user['id']).all()
+            user = g.user
 
             # get all restaurants with same name
             restaurants = Restaurant.query.filter(Restaurant.name == request.json['name']).all()
@@ -156,8 +152,8 @@ def restaurant_view(restaurantId):
     restaurants = Restaurant.query.filter(Restaurant.id == restaurantId).all()
 
 
-    is_owner = restaurants[0].owner.id == g.user['id']
-    is_admin = g.user['role'] == 'admin'
+    is_owner = restaurants[0].owner.id == g.user.id
+    is_admin = g.user.get_role() == 'admin'
 
     if not restaurants:
         return jsonify({
@@ -218,7 +214,6 @@ def restaurant_view(restaurantId):
 
         try:
             request.json["restaurant_number"] = int(request.json["restaurant_number"])
-            print(request.json['restaurant_number'])
         except:
             return jsonify({
                 'status' : 'error',
