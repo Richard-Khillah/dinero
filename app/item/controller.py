@@ -172,8 +172,8 @@ def index(path):
                 'error': 'Forbidden Access'
             })
 
-@itemMod.route('/<int:itemId>', defaults={'path': ""}, methods=['GET', 'PUT', 'DELETE'])
-@itemMod.route('/delete-all', methods=['DELETE'])
+@itemMod.route('/<int:itemId>', methods=['GET', 'PUT', 'DELETE'])
+@itemMod.route('/delete-all', defaults={'itemId': 0}, methods=['DELETE'])
 def update(itemId):
     # authorized status based on login informatoin
     authorizedUser = g.user.role >= USER.MANAGER
@@ -283,7 +283,7 @@ def update(itemId):
     # delete a single item
     if request.method == 'DELETE':
         if authorizedUser:
-            if request.path == '/delete-all':
+            if request.path == '/item/delete-all':
                 try:
                     numDeleted = Item.query.delete()
                     dbs.commit()
