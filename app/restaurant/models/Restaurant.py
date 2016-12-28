@@ -8,12 +8,12 @@ class Restaurant(db.Model):
     restaurant_number = db.Column(db.Integer)
     address = db.Column(db.String(128))
 
-    owner = db.relationship('User', secondary=restaurant_owner, backref=db.backref('owner', lazy='dynamic'))
+    owner = db.relationship('User', secondary=restaurant_owner, backref=db.backref('owner', lazy='dynamic'), uselist=False)
 
     workers = db.relationship('User')
 
-    def __init__(self, name=None, restaurant_number=None, address=None):
-
+    def __init__(self, owner=None, name=None, restaurant_number=None, address=None):
+        self.owner = owner
         self.name = name
         self.restaurant_number = restaurant_number
         self.address = address
