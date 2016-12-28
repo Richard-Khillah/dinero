@@ -23,7 +23,7 @@ dbs = db.session
 @itemMod.route('/', defaults={'path': ''}, methods=['GET', 'POST'])
 @itemMod.route('/<path:path>')#, methods=['GET', 'POST'])
 @requires_login
-def index(command):
+def index(path):
     # authorized status based on login informatoin
     authorizedUser = g.user.role >= USER.MANAGER
 
@@ -46,8 +46,6 @@ def index(command):
         else:
             page = 1
 
-        ##Algorithm for user login.
-
         # Query all items in the database and return.
         if authorizedUser:
             items = get('all_items')
@@ -64,28 +62,11 @@ def index(command):
                 'data': [str(item) for item in items]
             }), 200
 
-        """
-        # Query all items in the database and return.
-        if command == 'test':
-            items = get('all_items')
-            return jsonify({
-                'status': 'success',
-                # Return allavailable information about all items
-                'data': [repr(item) for item in items]
-            }), 200
-        elif command == 'cust':
-            items = get('all_items')
-            return jsonify({
-                'status': 'success',
-                #return only `menu style` information
-                'data': [str(item) for item in items]
-            }), 200
-        """
     # add item to database
     if request.method == 'POST':
         print("got into add_item()")
         if authorizedUser:
-            if command == 'test':
+            if path == '/test':
                 addTestItems()
 
                 items = get('all_items')
@@ -93,17 +74,17 @@ def index(command):
                     'status': 'success',
                     'data': [repr(item) for item in items]
                 }), 200
-            elif command == 'normal':
-
+            elif path == '/':
                 # validate the inputted information.
                 form = ItemValidator(data=request.json)
                 if form.validate():
-                    # Check whether item exists
+
                     name = request.json['name']
                     cost = request.json['cost']
                     description = request.json['description']
                     category = request.json['category']
 
+                    # Check whether item exists
                     found_items = items_with_same(name, description, cost)#, itemId)
                     if not any(found_items):
                         #add item to database
@@ -130,7 +111,7 @@ def index(command):
                             }), 400
 
                     else:
-                        message, duplicate_item, same_named_items, same_descriptioned_items = construct_return_package(found_items)
+                        message, duplicate_item, dup_named_itmes, same_descriptioned_items = construct_return_package(found_items)
 
                         return jsonify({
                             'status': 'error',
@@ -138,7 +119,7 @@ def index(command):
                             'data': {
                                 'duplicate items': serialize_found(duplicate_item),
                                 'items with same': {
-                                    'name': serialize_found(same_named_items),
+                                    'name': serialize_found(dup_named_itmes),
                                     'description': serialize_found(same_descriptioned_items)
                                 }
                             }
@@ -155,12 +136,13 @@ def index(command):
                 'error': 'Forbidden Access'
             })
 
-@itemMod.route('/<int:itemId>', methods=['GET', 'PUT', 'DELETE'])
+@itemMod.route('/<int:itemId>', defaults={'path'= ""}, methods=['GET', 'PUT', 'DELETE'])
+@itemMod.route('/<path:path>')
 def update(itemId):
     # authorized status based on login informatoin
     authorizedUser = g.user.role >= USER.MANAGER
 
-    # retrieve and verify the existence of the Item from the database
+    # verify the existence of and retrieve the Item from the database
     if itemId:
         item = get(itemId)
         if not item:
@@ -170,15 +152,27 @@ def update(itemId):
             }), 400
 
     # view a single Item
-    if request.method == 'GET':
-        item = serialize(item)
-        return jsonify({
-            'status': 'success',
-            'message': 'found item successfully',
-            'data': {
-                'item': item
-            }
-        }), 200
+        if request.method == 'GET':
+            if not authorizedUser:
+                item = serialize(item)
+                return jsonify({
+                    'status': 'success',
+                    'message': 'found item successfully',
+                    'data': {
+                        'item': item
+                    }
+                }), 200
+            else:
+                # Return the raw form of the item
+                item = repr(item)
+                return jsonify({
+                    'status': 'success',
+                    'message': 'found item successfully',
+                    'data': {
+                        'item': item
+                    }
+                }), 200
+
 
     # update a single Item
     if request.method == 'PUT':
@@ -194,7 +188,6 @@ def update(itemId):
                 # If no items were found in the database containing the same
                 # description and/or name, then update the item accordingly.
                 # Otherwise, keep the Item intact as is, i.e. do not modify Item
-                #TODO add any()
                 if not any(found_items):
                     try:
                         item.name = name
@@ -209,18 +202,21 @@ def update(itemId):
                             'data': item
                         }), 200
                     except:
+                        # Something went wrong in updating the item and the database
+                        # has been rolledback to the state immediately before
+                        # attempting to update
                         dbs.rollback()
                         return jsonify({
                             'status': 'error',
-                            'message': 'error occured when updating item',
+                            'message': 'error occured when updating item. Database hase been rolled back.',
                             'error': {
                                 'key': ['errors']
                             }
                         }), 400
                 else:
-                    # Item is potentially duplicating an item that already
-                    # exists in the database.
-                    message, duplicate_item, same_named_items, same_descriptioned_items = construct_return_package(found_items)
+                    # Some form of duplication, wether it be name, description, category, id, etc.,
+                    # Detected, and no update will occur
+                    message, duplicate_item, dup_named_itmes, same_descriptioned_items = construct_return_package(found_items)
 
                     return jsonify({
                         'status': 'error',
@@ -228,16 +224,18 @@ def update(itemId):
                         'data': {
                             'duplicate items': serialize_found(duplicate_item),
                             'items with same': {
-                                'name': serialize_found(same_named_items),
+                                'name': serialize_found(dup_named_itmes),
                                 'description': serialize_found(same_descriptioned_items)
                             }
                         }
                     }), 400
+            # The form was not validated.
             return jsonify({
                 'status': 'error',
                 'message': 'there was an error with form validation',
                 'error': form.errors
             }), 400
+        # Whoever is trying to update is not authorized to do so.
         else:
             return jsonify({
                 'status': 'error',
@@ -248,13 +246,13 @@ def update(itemId):
     # delete a single item
     if request.method == 'DELETE':
         if authorizedUser:
-            if itemId == 0:
+            if path == '/delete-all':
                 try:
                     numDeleted = Item.query.delete()
                     dbs.commit()
                     return jsonify({
                         'status': 'success',
-                        'message': '%d items successfully removed from the data base.' % numDeleted,
+                        'message': '%d item(s) successfully removed from the data base.' % numDeleted,
                     }), 202
                 except:
                     dbs.rollback()
@@ -262,24 +260,28 @@ def update(itemId):
                         'status': 'error',
                         'message': 'there was an error deleting all items from the data base'
                     }), 500
-
-            try:
-                dbs.delete(item)
-                dbs.commit()
-                return jsonify({
-                    'status': 'success',
-                    'message': '%d deleted from the database.' % itemId,
-                }), 200
-            except:
-                dbs.rollback()
-                return jsonify({
-                    'status': 'error',
-                    'message': '%r not deleted.',
-                    'errors': {
-                        'key': ['errors here']
-                    }
-                }), 400
+            elif itemId:
+                # Delete a single item
+                try:
+                    dbs.delete(item)
+                    dbs.commit()
+                    return jsonify({
+                        'status': 'success',
+                        'message': '%d deleted from the database.' % itemId,
+                    }), 200
+                except:
+                    # Error while deleteing or commiting a delete to dbs;
+                    # rollback the database.
+                    dbs.rollback()
+                    return jsonify({
+                        'status': 'error',
+                        'message': '%r not deleted.',
+                        'errors': {
+                            'key': ['errors here']
+                        }
+                    }), 400
         else:
+            #user is not authorized to delete.
             return jsonify({
                 'status': 'error',
                 'message': 'You are not authorized to update information',
@@ -305,20 +307,21 @@ def serialize(item):
     return item.to_dict()
 
 #TODO move this to front end?
-def items_with_same(name, description, cost, *iid):
+def items_with_same(name, description, cost, id):
     print("enter items_with_same()")
     count = 0 # Number of potential duplicates
 
     #TODO rename variables
-    same_name_item_list = Item.query.filter_by(name=name).all()
-    same_desc_item_list = Item.query.filter_by(description=description).all()
-    all_items = same_name_item_list + same_desc_item_list
+    duplicate_names = Item.query.filter_by(name=name).all()
+    duplicate_descs = Item.query.filter_by(description=description).all()
+    all_items = duplicate_names + duplicate_descs
 
     duplicate_item = {}
-    same_name_dict = {} # empty dictionary to add any item that might be duplicates
+    same_name_dict = {}
     same_description_dict = {}
-    if iid:
-        id = iid[0]
+
+    if id:
+        # keep track of all the id's we have already processed
         mapped_ids = []
         for item in all_items:
             item_id = item.id
@@ -327,6 +330,8 @@ def items_with_same(name, description, cost, *iid):
                 if item.id not in mapped_ids:
                     equals = item.name == name and item.cost == cost and item.description == description
 
+                    # sort query items into categories based on how they are
+                    # similar to the item with itemId
                     if equals:
                         count += 1
                         duplicate_item[count] = serialize(item)
@@ -338,8 +343,8 @@ def items_with_same(name, description, cost, *iid):
                         same_description_dict[count] = serialize(item)
                     mapped_ids.append(item.id)
 
-    #return both lists to the caller.
     return duplicate_item, same_name_dict, same_description_dict
+
     #TODO update 'PUT' found_items
     #TODO ensureif not any() still operates accurately
 
@@ -356,9 +361,9 @@ def serialize_found(items):
     return list_of_items
 
 def construct_return_package(found_items):
-    duplicate_item, same_named_items, same_descriptioned_items = found_items
+    duplicate_item, dup_named_itmes, same_descriptioned_items = found_items
     num_duplicates = len(duplicate_item)
-    num_same_name_items = len(same_named_items)
+    num_same_name_items = len(dup_named_itmes)
     num_same_description_items = len(same_descriptioned_items)
 
     message = ""
@@ -382,7 +387,7 @@ def construct_return_package(found_items):
     # put together same descriptioned items message
     if same_descriptioned_items:
         # add pluralized version of description message
-        if duplicate_item or same_named_items:
+        if duplicate_item or dup_named_itmes:
             if num_same_description_items > 1:
                 message += ' and %d items with the same description' % num_same_description_items
             message += ' and %d item with the same description' % num_same_description_items
@@ -392,7 +397,7 @@ def construct_return_package(found_items):
     message += ' exists.'
 
     # message will NOT be None
-    return message, duplicate_item, same_named_items, same_descriptioned_items
+    return message, duplicate_item, dup_named_itmes, same_descriptioned_items
 
 def delete_all():
     itemSet = dbs.query().all()
