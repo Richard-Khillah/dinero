@@ -10,20 +10,6 @@ from app.auth.validators.UserValidator import UserValidator
 auth = Blueprint('auth', __name__, url_prefix='/auth')
 
 
-# This is middleware that happens before the route controller is executed
-# a user makes a request -> before_request(request) -> to specif route -> response
-@auth.before_request
-def before_request():
-    if 'Authorization' in request.headers:
-        token = request.headers['Authorization'].split(' ')[1]
-
-        try:
-            g.user = jwt.decode(token,app.config['SECRET_KEY'])
-        except (jwt.DecodeError, jwt.ExpiredSignatureError):
-            return jsonify({'message' : 'Token is invalid'}), 401
-    else:
-        g.user = None
-
 
 @auth.route('/')
 @requires_login
@@ -50,20 +36,13 @@ def login():
 
     user = User.query.filter(User.email==request.json['email']).order_by(User.id).all()
 
-    console.log(user)
-
     if len(user) is 0:
         return jsonify({
             'message' : 'Email or password incorrect.'
         }), 401
 
     if user[0].check_password(request.json['password']):
-        payload = {
-            'id' : user[0].id,
-            'username' : user[0].username,
-            'email' : user[0].email,
-            'exp' : datetime.utcnow() + timedelta(days=99999)
-        }
+        payload = user[0].to_dict()
 
         # create a jwt token for user
         token = jwt.encode(payload, app.config['SECRET_KEY'])
@@ -110,12 +89,7 @@ def register():
         db.session.add(user)
         db.session.commit()
 
-        payload = {
-            'id' : user.id,
-            'username' : user.username,
-            'email' : user.email,
-            'exp' : datetime.utcnow() + timedelta(days=99999)
-        }
+        payload = user.to_dict()
 
         # create a jwt token for user
         token = jwt.encode(payload, app.config['SECRET_KEY'])
