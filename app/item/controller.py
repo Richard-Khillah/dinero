@@ -136,7 +136,7 @@ def index(path):
                 'error': 'Forbidden Access'
             })
 
-@itemMod.route('/<int:itemId>', defaults={'path'= ""}, methods=['GET', 'PUT', 'DELETE'])
+@itemMod.route('/<int:itemId>', defaults={'path': ""}, methods=['GET', 'PUT', 'DELETE'])
 @itemMod.route('/<path:path>')
 def update(itemId):
     # authorized status based on login informatoin
