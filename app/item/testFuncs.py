@@ -29,7 +29,7 @@ def addTestItems():
         else:
             category = None
         try:
-            item = Item(name, cost, description)#, category)
+            item = Item(name, cost, description, category)
             dbs.add(item)
             dbs.commit()
             i += 1

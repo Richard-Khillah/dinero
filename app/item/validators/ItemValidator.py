@@ -1,5 +1,7 @@
 from wtforms import Form, StringField, IntegerField, FloatField, validators
 
+#from app.item.constants import Category
+
 class ItemValidator(Form):
     restaurant_id = IntegerField('Restaurant id', [
         validators.DataRequired(),
@@ -15,6 +17,11 @@ class ItemValidator(Form):
         validators.DataRequired(),
         validators.NumberRange(min=1, message='Item cost must be greater than 0.')
     ])
+
+    #category = StringField('category', [
+    #    validators.DataRequired(),
+    #])
+
 
     """
     #description is an optional field

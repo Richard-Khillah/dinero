@@ -22,11 +22,18 @@ def index(command):
     #index page
     if request.method == 'GET':
         # Query all items in the database and return.
-        items = get('all_items')
-        return jsonify({
-            'status': 'success',
-            'data': [str(item) for item in items]
-        }), 200
+        if command == 'test':
+            items = get('all_items')
+            return jsonify({
+                'status': 'success',
+                'data': [repr(item) for item in items]
+            }), 200
+        elif command == 'cust':
+            items = get('all_items')
+            return jsonify({
+                'status': 'success',
+                'data': [str(item) for item in items]
+            }), 200
 
     # add item to database
     #TODO update add() with found_items `eq`
@@ -40,7 +47,7 @@ def index(command):
                 'status': 'success',
                 'data': [str(item) for item in items]
             }), 200
-        else:
+        elif command == 'normal':
 
             # validate the inputted information.
             form = ItemValidator(data=request.json)
@@ -49,12 +56,13 @@ def index(command):
                 name = request.json['name']
                 cost = request.json['cost']
                 description = request.json['description']
+                category = request.json['category']
 
                 found_items = items_with_same(name, description, cost)#, itemId)
                 if not any(found_items):
                     #add item to database
                     try:
-                        item = Item(request.json['name'], request.json['cost'], request.json['description'])
+                        item = Item(request.json['name'], request.json['cost'], request.json['description'], request.json['category'])
                         dbs.add(item)
                         dbs.commit()
                         print("got to after commit")
