@@ -4,20 +4,26 @@ from flask import Blueprint, request, g, redirect, url_for, jsonify
 
 from app import db
 from app.restaurant.models.Restaurant import Restaurant
+#from models import Restaurant
 from app.auth.models.User import User
 from app.restaurant.validators.RestaurantValidator import RestaurantValidator
+
+#from validators.RestaurantValidator import RestaurantValidator
+
 from app.auth import constants as USER
+from app.auth.decorators import requires_login
+
 
 restaurantMod = Blueprint('restaurant', __name__, url_prefix='/restaurants')
 
 ## TODO: create auth validation on all routes
 
+## create
+#@restaurantMod.route('/create_restaurant', methods=['POST'])
 @restaurantMod.route('/', methods=['GET','POST'])
+@requires_login
 def index_restaurant():
     if request.method == 'GET':
-        # TODO: check if user is admin
-
-        # TODO: check if user is owner
         page = None
         # check if user supplied a page number in query
         if request.args.get('page', ''):
@@ -34,7 +40,20 @@ def index_restaurant():
         else:
             page = 1
 
-        restaurant_query = Restaurant.query.paginate(page,25,False)
+        restaurant_query = None
+
+        if g.user.role == USER.ADMIN:
+            restaurant_query = Restaurant.query.paginate(page,25,False)
+        elif g.user.role == USER.OWNER:
+            restaurant_query = Restaurant.query.join(Restaurant.owner, aliased=True).filter(User.id==g.user.id).paginate(page, 25,False)
+        else:
+            return jsonify({
+                'status' : 'error',
+                'message': 'You are not allowed.',
+                'errors' : {
+                    'user' : 'Not authorized'
+                }
+            }), 403
 
         restaurants = []
 
@@ -59,7 +78,6 @@ def index_restaurant():
     else: # POST request
         try:
             request.json["restaurant_number"] = int(request.json["restaurant_number"])
-            print(request.json['restaurant_number'])
         except:
             return jsonify({
                 'status' : 'error',
@@ -69,38 +87,47 @@ def index_restaurant():
                 'message' : 'There was a problem making the request.'
             }), 400
 
-        try:
-            request.json['owner_id'] = int(request.json['owner_id'])
-        except:
-            return jsonify({
-                'status' : 'error',
-                'errors' : [
-                    'Owner id must be a positive integer.'
-                ],
-                'message' : 'There was a problem making the request.'
-            }), 400
+        request.json['owner_id'] = g.user.id
 
         form = RestaurantValidator(data=request.json)
 
         if form.validate():
+            user = g.user
 
-            # todo get user from the token
-            user = User.query.filter(User.id==request.json['owner_id']).all()
+            # get all restaurants with same name
+            restaurants = Restaurant.query.filter(Restaurant.name == request.json['name']).all()
 
-            if len(user) != 1:
+            errors = {}
+
+            for restaurant in restaurants:
+                if restaurant.address == request.json['address']:
+                    errors['address'] = ['Address is already taken for this restaurant name']
+                if restaurant.restaurant_number == request.json['restaurant_number']:
+                    errors['restaurant_number'] = ['Restaurant number is already taken for this restaurant name']
+
+            if errors:
                 return jsonify({
                     'status' : 'error',
-                    'error' : 'Owner does not exist.',
-                    'message' : 'There was an error'
+                    'message' : 'There was a problem adding the restaurant',
+                    'errors' : errors
                 }), 400
 
-            user = user[0]
 
             restaurant = Restaurant(user, request.json['name'], request.json['restaurant_number'], request.json['address'])
             user.role = USER.OWNER
 
-            db.session.add(restaurant)
-            db.session.commit()
+            try:
+                db.session.add(restaurant)
+                db.session.commit()
+            except:
+                return jsonify({
+                    'status' : 'error',
+                    'message' : 'There was a problem adding the restaurant',
+                    'errors' : {
+                        'server' : 'There was a server error'
+                    }
+                }), 500
+
 
             return jsonify({
                 'status' : 'success',
@@ -110,6 +137,7 @@ def index_restaurant():
                 }
             }), 201
 
+        # if there were form errors
         return jsonify({
             'message' : 'There is missing data',
             'errors' : form.errors
@@ -117,6 +145,7 @@ def index_restaurant():
 
 
 @restaurantMod.route('/<int:restaurantId>', methods=['GET', 'PUT', 'DELETE'])
+@requires_login
 def restaurant_view(restaurantId):
     # Happens for every request on this route
     if restaurantId < 1:
@@ -129,7 +158,11 @@ def restaurant_view(restaurantId):
 
     restaurants = Restaurant.query.filter(Restaurant.id == restaurantId).all()
 
-    if len(restaurants) is not 1:
+
+    is_owner = restaurants[0].owner.id == g.user.id
+    is_admin = g.user.get_role() == 'admin'
+
+    if not restaurants:
         return jsonify({
         'message' : 'Restaurant cannot be found',
         'errors' : {
@@ -149,7 +182,16 @@ def restaurant_view(restaurantId):
             }
         })
     if request.method == 'DELETE': # single delete
-        # TODO: check if user is owner or admin
+        if not is_owner and not is_admin:
+            return jsonify({
+                'status' : 'error',
+                'message' : 'You are not allowed',
+                'errors' : {
+                    'user' : 'Not allowed'
+                }
+            }), 403
+
+
         try:
             db.session.delete(restaurants[0])
             db.session.commit()
@@ -168,9 +210,17 @@ def restaurant_view(restaurantId):
         }), 200
 
     else: # single update
+        if not is_owner and not is_admin:
+            return jsonify({
+                'status' : 'error',
+                'message' : 'You are not allowed',
+                'errors' : {
+                    'user' : 'Not allowed'
+                }
+            }), 403
+
         try:
             request.json["restaurant_number"] = int(request.json["restaurant_number"])
-            print(request.json['restaurant_number'])
         except:
             return jsonify({
                 'status' : 'error',
@@ -180,43 +230,48 @@ def restaurant_view(restaurantId):
                 'message' : 'There was a problem making the request.'
             }), 400
 
-        try:
-            request.json['owner_id'] = int(request.json['owner_id'])
-        except:
-            return jsonify({
-                'status' : 'error',
-                'errors' : [
-                    'Owner id must be a positive integer.'
-                ],
-                'message' : 'There was a problem making the request.'
-            }), 400
+        request.json['owner_id'] = g.user['id']
 
         form = RestaurantValidator(data=request.json)
 
         if form.validate():
             restaurant = restaurants[0]
 
-            # TODO: get user from token
-            user = User.query.filter(User.id==request.json['owner_id']).all()
+            # get all restaurants with same name
+            restaurants = Restaurant.query.filter(Restaurant.name == request.json['name']).all()
 
-            if len(user) != 1:
+            errors = {}
+
+            for rest in restaurants:
+                if rest.address == request.json['address']:
+                    errors['address'] = ['Address is already taken for this restaurant name']
+                if rest.restaurant_number == request.json['restaurant_number']:
+                    errors['restaurant_number'] = ['Restaurant number is already taken for this restaurant name']
+
+            if errors:
                 return jsonify({
                     'status' : 'error',
-                    'errors' : {
-                        'owner_id' : ['Owner does not exist.']
-                    },
-                    'message' : 'There was an error'
+                    'message' : 'There was a problem adding the restaurant',
+                    'errors' : errors
                 }), 400
 
-            user = user[0]
 
-            restaurant.owner = user
             restaurant.name = request.json['name']
             restaurant.restaurant_number = request.json['restaurant_number']
             restaurant.address = request.json['address']
 
             # save the restaurant updates
-            db.session.commit()
+            try:
+                db.session.commit()
+            except:
+                return jsonify({
+                    'status' : 'error',
+                    'message' : 'There was a problem adding the restaurant',
+                    'errors' : {
+                        'server' : 'There was a server error'
+                    }
+                }), 500
+
 
             return jsonify({
                 'status' : 'sucess',

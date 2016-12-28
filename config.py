@@ -14,7 +14,11 @@ class Development(Default):
     SECRET_KEY = 'asdfljk23piorj9032rjidafjd90sfasfds0fiasd'
     SQLALCHEMY_TRACK_MODIFICATIONS = False
 
+class Testing(Development):
+    SQLALCHEMY_DATABASE_URI = 'sqlite:///' + os.path.join(_basedir, 'test_app.sqlite')
+
 config = {
     'DEFAULT': Default,
-    'DEVELOPMENT': Development
+    'DEVELOPMENT': Development,
+    'TESTING' : Testing
 }
