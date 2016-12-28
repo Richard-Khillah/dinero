@@ -12,10 +12,10 @@ def requires_login(f):
         return f(*args, **kwargs)
     return decorated_function
 
-def requres_status(f):
+def requres_status_manager(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
-        if g.user is USER.CUSTOMER:
+        if g.user.role < USER.MANAGER:
             abort(403)
         return f(*args, **kwargs)
     return decorated_function

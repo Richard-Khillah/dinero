@@ -48,7 +48,9 @@ def login():
             'message' : 'Missing email or password'
         }), 400
 
-    user = User.query.filter(User.email==request.json['email']).all()
+    user = User.query.filter(User.email==request.json['email']).order_by(User.id).all()
+
+    console.log(user)
 
     if len(user) is 0:
         return jsonify({
@@ -93,8 +95,8 @@ def register():
 
 
         # check if user exists
-        users = User.query.filter(User.email==request.json['email']).all()
-        users += User.query.filter(User.username==request.json['username']).all()
+        users = User.query.order_by(User.id).filter(User.email==request.json['email']).all()
+        users += User.query.order_by(User.id).filter(User.username==request.json['username']).all()
 
 
         if len(users) != 0:
