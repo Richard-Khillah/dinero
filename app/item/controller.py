@@ -398,14 +398,3 @@ def construct_return_package(found_items):
 
     # message will NOT be None
     return message, duplicate_item, dup_named_itmes, same_descriptioned_items
-
-def delete_all():
-    itemSet = dbs.query().all()
-    for item in itemSet:
-        try:
-            dbs.delete()
-        except:
-            dbs.rollback()
-            return False
-        dbs.commit()
-        return True
