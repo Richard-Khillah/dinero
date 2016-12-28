@@ -4,8 +4,8 @@ from flask import Blueprint, request, g, redirect, url_for, jsonify
 
 from app import db
 from app.restaurant.models.Restaurant import Restaurant
-from app.auth.models.User import User
 from app.restaurant.validators.RestaurantValidator import RestaurantValidator
+from app.auth.models.User import User
 from app.auth import constants as USER
 from app.auth.decorators import requires_login
 
