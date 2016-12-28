@@ -6,10 +6,11 @@ class Bill(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     paid = db.Column(db.Boolean, default=False)
     reciept_number = db.Column(db.String(120))
-    customer = db.Column(db.Integer, db.ForeignKey('user.id'))
+    customer_id = db.Column(db.Integer, db.ForeignKey('user.id'))
     message = db.Column(db.String(120), default=None)
     created_at = db.Column(db.DateTime)
-    # resturant id
+
+    resturant_id = db.Column(db.Integer, db.ForeignKey('restaurant.id'))
 
     items = db.relationship('Item', secondary=BillItems, backref=db.backref('bills', lazy='dynamic'))
 
