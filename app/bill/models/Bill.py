@@ -11,7 +11,6 @@ class Bill(db.Model):
     created_at = db.Column(db.DateTime)
 
     resturant_id = db.Column(db.Integer, db.ForeignKey('restaurant.id'))
-
     items = db.relationship('Item', secondary=BillItems, backref=db.backref('bills', lazy='dynamic'))
 
     def __init__(self, paid=False, reciept_number=None, customer, message, created_at=datetime.now()):

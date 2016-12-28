@@ -9,6 +9,7 @@ class Restaurant(db.Model):
     address = db.Column(db.String(128))
 
     owner = db.relationship('User', secondary=restaurant_owner, backref=db.backref('owner', lazy='dynamic'), uselist=False)
+    bills = db.relationship('Bill', backref=db.backref('restaurant', lazy='dynamic'))
 
     workers = db.relationship('User')
 
