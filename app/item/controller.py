@@ -5,7 +5,6 @@ from app import db
 from app.item.models.Item import Item
 from app.auth.models.User import User
 from app.item.validators.ItemValidator import ItemValidator
-#from app.auth.decorators import requires_login, requres_status_manager
 
 from app.auth import constants as USER
 from app.auth.decorators import requires_login
@@ -15,8 +14,6 @@ from app.item.testFuncs import addTestItems
 itemMod = Blueprint('item', __name__, url_prefix='/item')
 dbs = db.session
 
-#TODO Test items:
-        #rollback, duplicate items, user authentication
 #TODO Create Documentation
 
 ##index
