@@ -19,7 +19,7 @@ dbs = db.session
         #rollback, duplicate items, user authentication
 #TODO Create Documentation
 
-
+##index
 @itemMod.route('/', methods=['GET', 'POST'], defaults={'path': ''})
 @itemMod.route('/<path:path>')
 @requires_login
@@ -29,7 +29,6 @@ def index(path):
 
     print(authorizedUser)
     print("path = %r" % path)
-
     #index page
     if request.method == 'GET':
         page = None
@@ -92,7 +91,6 @@ def index(path):
                     'data': [repr(item) for item in items]
                 }), 200
 
-            #elif path == '/':
             elif not path:#path == '/':
                 # validate the inputted information.
                 form = ItemValidator(data=request.json)
@@ -146,24 +144,27 @@ def index(path):
                         }), 400
 
                     return jsonify({
-                    'status': 'error',
-                    'message': 'there was an error with form validation',
-                    'error': form.errors
+                        'status': 'error',
+                        'message': 'there was an error with form validation',
+                        'error': form.errors
                     }), 400
 
                     # Was not able to process request
+                #There was a problem with validating the form
                 return jsonify({
-                'status': 'error',
-                'message': 'there was an error with form validation',
-                'error': form.errors
+                    'status': 'error',
+                    'message': 'there was an error with form validation',
+                    'error': form.errors
                 }), 400
+
+            # page not found
             else:
                 return jsonify({
                     'status': 'error',
                     'message': 'page not found.',
                     'error': 'route(%r) not found.' % path
                 })
-
+        #not authorized
         else:
             return jsonify({
                 'status': 'error',
@@ -172,13 +173,8 @@ def index(path):
             })
 
 @itemMod.route('/<int:itemId>', defaults={'path': ""}, methods=['GET', 'PUT', 'DELETE'])
-@itemMod.route('/<path:path>')
-
+@itemMod.route('/delete-all', methods=['DELETE'])
 def update(itemId):
-    # authorized status based on login informatoin
-    authorizedUser = g.user.role >= USER.MANAGER
-
-def update(itemId, path):
     # authorized status based on login informatoin
     authorizedUser = g.user.role >= USER.MANAGER
     print("inside update()")
@@ -287,7 +283,7 @@ def update(itemId, path):
     # delete a single item
     if request.method == 'DELETE':
         if authorizedUser:
-            if path == '/delete-all':
+            if request.path == '/delete-all':
                 try:
                     numDeleted = Item.query.delete()
                     dbs.commit()
@@ -321,6 +317,11 @@ def update(itemId, path):
                             'key': ['errors here']
                         }
                     }), 400
+            else:
+                return jsonify({
+                    'status': 'error',
+                    'message': 'error. second to last else in update()'
+                })
         else:
             #user is not authorized to delete.
             return jsonify({
@@ -333,7 +334,9 @@ def update(itemId, path):
 # Query itemId and return the item to the caller.
 # if an item with `itemId` is not found in the database, return False
 def get(arg):
+    print("inside get(arg). arg = %r" % arg)
     if arg == 'all_items':
+        print('inside all_items')
         item = Item.query.all()
     print("inside get(arg). arg = %r" % arg)
     if arg == 'all_items':
@@ -358,7 +361,6 @@ def items_with_same(name, description, cost, id):
     print("enter items_with_same()")
     count = 0 # Number of potential duplicates
 
-    #TODO rename variables
     duplicate_names = Item.query.filter_by(name=name).all()
     duplicate_descs = Item.query.filter_by(description=description).all()
     all_items = duplicate_names + duplicate_descs
@@ -415,6 +417,7 @@ def construct_return_package(found_items):
 
     message = ""
 
+    #TODO create errors[]
     # put together same named items message
     if duplicate_item:
         if num_duplicates > 1:
