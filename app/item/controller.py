@@ -354,9 +354,10 @@ def serialize(item):
     return item.to_dict()
 
 #TODO move this to front end?
-def items_with_same(name, description, cost, id):
+def items_with_same(name, description, cost, *id):
     print("enter items_with_same()")
     count = 0 # Number of potential duplicates
+    mapped_ids = []
 
     duplicate_names = Item.query.filter_by(name=name).all()
     duplicate_descs = Item.query.filter_by(description=description).all()
@@ -367,27 +368,48 @@ def items_with_same(name, description, cost, id):
     same_description_dict = {}
 
     if id:
-        # keep track of all the id's we have already processed
-        mapped_ids = []
         for item in all_items:
-            item_id = item.id
+            same_name = item.name == name
+            same_cost = item.cost == cost
+            same_desctiption = item.description == description
+            same_item = same_name and same_cost and same_desctiption
+
             if not item_id == id:
                 # items should be unique
                 if item.id not in mapped_ids:
-                    equals = item.name == name and item.cost == cost and item.description == description
-
                     # sort query items into categories based on how they are
                     # similar to the item with itemId
-                    if equals:
+                    if same_item:
                         count += 1
                         duplicate_item[count] = serialize(item)
-                    elif item.name == name:
+                    elif same_name:
                         count += 1
                         same_name_dict[count] = serialize(item)
                     else:
                         count += 1
                         same_description_dict[count] = serialize(item)
                     mapped_ids.append(item.id)
+
+    if not id:
+        for item in all_items:
+            same_name = item.name == name
+            same_cost = item.cost == cost
+            same_desctiption = item.description == description
+            same_item = same_name and same_cost and same_desctiption
+            if item.id not in mapped_ids:
+                # sort query items into categories based on how they are
+                # similar to the item with itemId
+                if same_item:
+                    count += 1
+                    duplicate_item[count] = serialize(item)
+                elif same_name:
+                    count += 1
+                    same_name_dict[count] = serialize(item)
+                else:
+                    count += 1
+                    same_description_dict[count] = serialize(item)
+                mapped_ids.append(item.id)
+
 
     return duplicate_item, same_name_dict, same_description_dict
 
@@ -407,41 +429,41 @@ def serialize_found(items):
     return list_of_items
 
 def construct_return_package(found_items):
-    duplicate_item, dup_named_itmes, same_descriptioned_items = found_items
-    num_duplicates = len(duplicate_item)
-    num_same_name_items = len(dup_named_itmes)
-    num_same_description_items = len(same_descriptioned_items)
+    dup_item, dup_name_item, dup_description_item = found_items
+    num_dup_item = len(dup_item)
+    num_dup_name_item = len(dup_name_item)
+    num_dup_description_item = len(dup_description_item)
 
     message = ""
 
     #TODO create errors[]
     # put together same named items message
-    if duplicate_item:
-        if num_duplicates > 1:
-            message += "%d duplicate items" % num_duplicates
+    if dup_item:
+        if num_dup_item > 1:
+            message += "%d duplicate items" % num_dup_item
         else:
             message += "1 duplicate item"
 
-    if same_named_items:
-        if duplicate_item:
+    if dup_name_item:
+        if dup_item:
             # add pluralized version of name message
-            if num_same_name_items > 1:
-                message += ', %d items with the same name' % num_same_name_items
+            if num_dup_name_item > 1:
+                message += ', %d items with the same name' % num_dup_name_item
             message += ', 1 item with the same name'
             # add singular version of name message
         message = '1 item with the same name'
 
     # put together same descriptioned items message
-    if same_descriptioned_items:
+    if dup_description_item:
         # add pluralized version of description message
-        if duplicate_item or dup_named_itmes:
-            if num_same_description_items > 1:
-                message += ' and %d items with the same description' % num_same_description_items
-            message += ' and %d item with the same description' % num_same_description_items
+        if dup_item or dup_name_item:
+            if num_dup_description_item > 1:
+                message += ' and %d items with the same description' % num_dup_description_item
+            message += ' and %d item with the same description' % num_dup_description_item
         # add singular version of description message
         else:
             message += '1 item with the same description'
     message += ' exists.'
 
     # message will NOT be None
-    return message, duplicate_item, dup_named_itmes, same_descriptioned_items
+    return message, dup_item, dup_name_item, dup_description_item
