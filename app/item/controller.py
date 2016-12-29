@@ -88,7 +88,7 @@ def index(path):
                     'data': [repr(item) for item in items]
                 }), 200
 
-            elif not path:#path == '/':
+            elif not path:
                 # validate the inputted information.
                 form = ItemValidator(data=request.json)
                 if form.validate():
