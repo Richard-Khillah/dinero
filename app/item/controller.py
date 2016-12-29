@@ -374,7 +374,7 @@ def items_with_same(name, description, cost, *id):
             same_desctiption = item.description == description
             same_item = same_name and same_cost and same_desctiption
 
-            if not item_id == id:
+            if not item.id == id:
                 # items should be unique
                 if item.id not in mapped_ids:
                     # sort query items into categories based on how they are
