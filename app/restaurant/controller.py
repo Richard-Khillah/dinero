@@ -99,6 +99,7 @@ def index_restaurant():
 
             errors = {}
 
+
             for restaurant in restaurants:
                 if restaurant.address == request.json['address']:
                     errors['address'] = ['Address is already taken for this restaurant name']
@@ -120,6 +121,8 @@ def index_restaurant():
                 db.session.add(restaurant)
                 db.session.commit()
             except:
+                db.session.rollback()
+
                 return jsonify({
                     'status' : 'error',
                     'message' : 'There was a problem adding the restaurant',
@@ -196,6 +199,7 @@ def restaurant_view(restaurantId):
             db.session.delete(restaurants[0])
             db.session.commit()
         except:
+            db.session.rollback()
             return jsonify({
                 'status' : 'error',
                 'message' : 'There was a problem deleteing the restaurant',
@@ -240,6 +244,7 @@ def restaurant_view(restaurantId):
             # get all restaurants with same name
             restaurants = Restaurant.query.filter(Restaurant.name == request.json['name']).all()
 
+
             errors = {}
 
             for rest in restaurants:
@@ -264,6 +269,8 @@ def restaurant_view(restaurantId):
             try:
                 db.session.commit()
             except:
+                db.session.rollback()
+
                 return jsonify({
                     'status' : 'error',
                     'message' : 'There was a problem adding the restaurant',
