@@ -4,15 +4,22 @@ from flask import Blueprint, request, g, redirect, url_for, jsonify
 
 from app import db
 from app.restaurant.models.Restaurant import Restaurant
+#from models import Restaurant
 from app.auth.models.User import User
 from app.restaurant.validators.RestaurantValidator import RestaurantValidator
+
+#from validators.RestaurantValidator import RestaurantValidator
+
 from app.auth import constants as USER
 from app.auth.decorators import requires_login
+
 
 restaurantMod = Blueprint('restaurant', __name__, url_prefix='/restaurants')
 
 ## TODO: create auth validation on all routes
 
+## create
+#@restaurantMod.route('/create_restaurant', methods=['POST'])
 @restaurantMod.route('/', methods=['GET','POST'])
 @requires_login
 def index_restaurant():
@@ -91,6 +98,7 @@ def index_restaurant():
             restaurants = Restaurant.query.filter(Restaurant.name == request.json['name']).all()
 
             errors = {}
+
 
             for restaurant in restaurants:
                 if restaurant.address == request.json['address']:
@@ -236,6 +244,7 @@ def restaurant_view(restaurantId):
             # get all restaurants with same name
             restaurants = Restaurant.query.filter(Restaurant.name == request.json['name']).all()
 
+
             errors = {}
 
             for rest in restaurants:
@@ -261,6 +270,7 @@ def restaurant_view(restaurantId):
                 db.session.commit()
             except:
                 db.session.rollback()
+
                 return jsonify({
                     'status' : 'error',
                     'message' : 'There was a problem adding the restaurant',
