@@ -39,9 +39,7 @@ def addTestItems():
                 'status': 'error',
                 'message': 'there was an running addTestItems().'
             })
-    items = Item.query.all()
-    for item in items:
-        print(str(item))
+            
     return jsonify({
         'status': 'success',
         'message': '%d items were added.' %i

@@ -24,8 +24,6 @@ def index(path):
     # authorized status based on login informatoin
     authorizedUser = g.user.role >= USER.MANAGER
 
-    print(authorizedUser)
-    print("path = %r" % path)
     #index page
     if request.method == 'GET':
         page = None
@@ -54,7 +52,6 @@ def index(path):
                 'data': [repr(item) for item in items]
             }), 200
 
-            print('back in index(), GET, authorizedUser. items = ', items)
             if items:
                 return jsonify({
                     'status': 'success',
@@ -77,7 +74,6 @@ def index(path):
 
     # add item to database
     if request.method == 'POST':
-        print("got into add_item()")
         if authorizedUser:
             if path == 'test':
                 addTestItems()
@@ -106,7 +102,7 @@ def index(path):
                             item = Item(request.json['name'], request.json['cost'], request.json['description'], request.json['category'])
                             dbs.add(item)
                             dbs.commit()
-                            print("got to after commit")
+
                             return jsonify({
                                 'status': 'success',
                                 'message': 'item added successfully.',
@@ -174,7 +170,6 @@ def index(path):
 def update(itemId):
     # authorized status based on login informatoin
     authorizedUser = g.user.role >= USER.MANAGER
-    print("inside update()")
 
     # verify the existence of and retrieve the Item from the database
     if itemId:
@@ -218,7 +213,7 @@ def update(itemId):
                 description = request.json['description']
 
                 found_items = items_with_same(name, description, cost, itemId)
-                print(found_items)
+
                 # If no items were found in the database containing the same
                 # description and/or name, then update the item accordingly.
                 # Otherwise, keep the Item intact as is, i.e. do not modify Item
@@ -331,21 +326,15 @@ def update(itemId):
 # Query itemId and return the item to the caller.
 # if an item with `itemId` is not found in the database, return False
 def get(arg):
-    print("inside get(arg). arg = %r" % arg)
     if arg == 'all_items':
-        print('inside all_items')
         item = Item.query.all()
-    print("inside get(arg). arg = %r" % arg)
     if arg == 'all_items':
-        print('inside all_items')
         item = Item.query.all()
-        print('item = ', item)
     elif type(arg) is str:
         item = Item.query.filter_by(name=arg).first()
     elif type(arg) is int:
         item = Item.query.filter_by(id=arg).first()
     if not item:
-        print('return from get is false')
         return False
     return item
 
@@ -355,7 +344,6 @@ def serialize(item):
 
 #TODO move this to front end?
 def items_with_same(name, description, cost, *id):
-    print("enter items_with_same()")
     count = 0 # Number of potential duplicates
     mapped_ids = []
 
