@@ -23,7 +23,7 @@ def requires_at_least_manager(f):
 def requires_admin(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
-        if g.user.role == USER.MANAGER:
+        if g.user.role != USER.ADMIN:
             abort(403)
         return f(*args, **kwargs)
     return decorated_function

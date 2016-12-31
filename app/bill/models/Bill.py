@@ -10,8 +10,9 @@ class Bill(db.Model):
     message = db.Column(db.String(120), default=None)
     created_at = db.Column(db.DateTime)
 
-    resturant_id = db.Column(db.Integer, db.ForeignKey('restaurant.id'))
+    restaurant_id = db.Column(db.Integer, db.ForeignKey('restaurant.id'))
     items = db.relationship('Item', secondary=BillItems, backref=db.backref('bills', lazy='dynamic'))
+    customer = db.relationship('User', back_populates='bills')
 
     def __init__(self, customer, paid=False, reciept_number=None, message=None, created_at=None):
         self.paid = paid

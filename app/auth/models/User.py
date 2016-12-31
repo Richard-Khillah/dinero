@@ -12,7 +12,7 @@ class User(db.Model):
     role = db.Column(db.SmallInteger, default=USER.ADMIN)
     _password = db.Column(db.String(120))
 
-    bills = db.relationship('Bill', backref=db.backref('customer', lazy='dynamic'))
+    bills = db.relationship('Bill', back_populates='customer')
     restaurant_id = db.Column(db.Integer, db.ForeignKey('restaurant.id'))
 
 

@@ -1,4 +1,5 @@
 from flask import Blueprint, request, g, jsonify
+from datetime import datetime
 
 from app import app, db
 
@@ -64,11 +65,11 @@ def bill_index():
     })
 
 
-@billMod.route('/<int:restaurantId', methods=['GET', 'PUT'])
+@billMod.route('/restaurant/<int:restaurantId>', methods=['GET', 'POST'])
 @requires_login
 @requires_at_least_server
 def restaurant_bill_index(restaurantId):
-    restaurant = Restaurant.query.find(Restaurant.id==restaurantId).all()
+    restaurant = Restaurant.query.filter(Restaurant.id==restaurantId).all()
 
     if not restaurant:
         return jsonify(error('Unable to find restaurant', {
@@ -99,11 +100,14 @@ def restaurant_bill_index(restaurantId):
 
         bills = []
 
-        for b in bills:
+        print(bill_query)
+
+        for b in bill_query.items:
             bill = b.to_dict()
 
-            bill['customer'] = b.owner.to_dict()
+            bill['customer'] = b.customer.to_dict()
 
+            print(bill)
             bills.append(bill)
 
         return jsonify({
@@ -126,7 +130,8 @@ def restaurant_bill_index(restaurantId):
                 'customer_id' : ['Customer id must be an integer > 0']
             })), 400
 
-        form = BillValidator(request.json)
+
+        form = BillValidator(data=request.json)
 
         if form.validate():
             customer = User.query.filter(User.id==request.json['customer_id']).all()
@@ -136,23 +141,49 @@ def restaurant_bill_index(restaurantId):
                     'customer_id' : ['Unable to find user with id of %d' % request.json['customer_id']]
                 })), 400
 
+            customer = customer[0]
+
             items = []
 
-            if request.json['items']:
-                for i, item in enumerate(request.json['items']):
+            if 'items' in request.json:
+                for i, item_id in enumerate(request.json['items']):
                     ## check if item exists
-                    else:
-                        return jsonify(error('There was a problem with item of index %d' % i, {
+                    try:
+                        item_id = int(item_id)
+                        if item_id < 0:
+                            raise Exception('Not integer for item id')
+                    except:
+                        return jsonify(error('Item id must be a positive integer', {
                             'items' : {
-                                i: itemForm.errors
+                                i: 'Item id must be a positive integer.'
                             }
                         })), 400
 
+
+                    item = Item.query.find.all(Item.id==item_id)
+
+                    if not item:
+                        return jsonify('Unable to find item', {
+                            'items' : {
+                                i : 'Item not found'
+                            }
+                        }), 400
+
+                    items.append(item)
+
+            print(items)
+
             json = request.json
+
+            if not 'created_at' in json:
+                json['created_at'] = datetime.now()
+
+            print(customer)
 
             bill = Bill(customer, json['paid'], json['reciept_number'], json['message'], json['created_at'])
 
             bill.items = items
+            bill.restaurant_id = restaurantId
 
             try:
                 db.session.add(bill)
@@ -185,4 +216,5 @@ def restaurant_bill_index(restaurantId):
 @billMod.route('/<int:billId>', methods=['GET', 'PUT', 'DELETE'])
 @requires_login
 def bill_single(billId):
-    pass
+    if request.method == 'GET':
+        pass
