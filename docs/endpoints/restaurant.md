@@ -1,7 +1,6 @@
 # Restaurant Module
 ---
 
-
 ## Endpoint: GET /restaurants/
 **Authentication:** No Auth needed __FOR NOW__
 
