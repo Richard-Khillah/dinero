@@ -157,7 +157,7 @@ def restaurant_bill_index(restaurantId):
                         })), 400
 
 
-                    item = Item.query.find.all(Item.id==item_id)
+                    item = Item.query.filter(Item.id==item_id).first()
 
                     if not item:
                         return jsonify('Unable to find item', {
@@ -218,7 +218,6 @@ def bill_single(billId):
             'bill' : ['Unable to find bill']
         })), 400
 
-    print(bills)
 
     if not bills:
         return jsonify(error('Unable to find Bill.', {
@@ -250,7 +249,7 @@ def bill_single(billId):
 
         for item in bill.items:
             items.append(item.to_dict())
-        print(data)
+
         data['items'] = items
         data['bill']['customer_id'] = bill.customer_id
 
@@ -269,4 +268,78 @@ def bill_single(billId):
         return jsonify(success('Successfully deleted the bill with id of %d' % billId))
 
     else:
-        pass
+        if not is_at_least_server:
+            abort(403)
+
+        form = BillValidator(data=request.json)
+
+        if form.validate():
+            # TODO: update items
+
+            if 'paid' in request.json:
+                bill.paid = request.json['paid']
+            bill.reciept_number = request.json['reciept_number']
+            if 'message' in request.json:
+                bill.message = request.json['message']
+            if 'created_at' in request.json:
+                bill.created_at = request.json['created_at']
+            if bill.customer_id != request.json['customer_id']:
+                try:
+                    user = User.query.filter(User.id==request.json['customer_id']).all()
+
+                    if not user:
+                        raise Exception('No User')
+
+                    bill.customer = user
+                except:
+                    return jsonify(error('There was a probelm with update.', {
+                        'customer_id' : ['Unable to find customer with id of %d' % request.json['customer_id']]
+                    })), 400
+
+            items = []
+
+            if 'items' in request.json and isinstance(request.json['items'], list):
+
+                for i, item_id in enumerate(request.json['items']):
+                    try:
+                        item_id = int(item_id)
+                    except:
+                        return jsonify(error('Item id must be a positive integer', {
+                            'items' : {
+                                i: 'Item id must be a positive integer.'
+                            }
+                        })), 400
+
+                    item = Item.query.filter(Item.id==item_id).first()
+
+                    if not item:
+                        return jsonify('Unable to find item', {
+                            'items' : {
+                                i : 'Item not found'
+                            }
+                        }), 400
+
+                    items.append(item)
+
+                bill.items = items
+
+            items_json = []
+
+            if items:
+                for item in items:
+                    items_json.append(item.to_dict())
+
+            try:
+                db.session.commit()
+            except:
+                db.session.rollback()
+                return jsonify(error('There was a problem updating bill', {
+                    'server' : ['There was a server error']
+                })), 500
+
+            return jsonify('Bill successfully updated', {
+                'bill' : bill.to_dict(),
+                'items' : items_json
+            })
+
+        return jsonify(error('There was a problem with your request', form.errors)), 400
