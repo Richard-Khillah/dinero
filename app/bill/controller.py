@@ -192,7 +192,7 @@ def restaurant_bill_index(restaurantId):
                 'bill' : bill.to_dict(),
             }
 
-
+            # add items to the returned data
             if items:
                 itemJson = []
                 for item in items:
@@ -212,6 +212,7 @@ def restaurant_bill_index(restaurantId):
 def bill_single(billId):
     bills = None
 
+    # ensure bill exists
     try:
         bills = Bill.query.filter(Bill.id==billId).all()
     except:
@@ -227,7 +228,7 @@ def bill_single(billId):
 
     bill = bills[0]
 
-
+    # check if user is authorized
     is_customer = bill.customer.id is g.user.id
     is_at_least_server = g.user.role >= USER.SERVER # check is right restaurant
 
@@ -268,14 +269,13 @@ def bill_single(billId):
         return jsonify(success('Successfully deleted the bill with id of %d' % billId))
 
     else:
+        ## only workers are allowed
         if not is_at_least_server:
             abort(403)
 
         form = BillValidator(data=request.json)
 
         if form.validate():
-            # TODO: update items
-
             if 'paid' in request.json:
                 bill.paid = request.json['paid']
             bill.receipt_number = request.json['receipt_number']
@@ -284,6 +284,7 @@ def bill_single(billId):
             if 'created_at' in request.json:
                 bill.created_at = request.json['created_at']
             if bill.customer_id != request.json['customer_id']:
+                # ensure new user exists
                 try:
                     user = User.query.filter(User.id==request.json['customer_id']).all()
 
@@ -299,7 +300,7 @@ def bill_single(billId):
             items = []
 
             if 'items' in request.json and isinstance(request.json['items'], list):
-
+                # update bill items
                 for i, item_id in enumerate(request.json['items']):
                     try:
                         item_id = int(item_id)
