@@ -3,9 +3,9 @@ from wtforms import Form, StringField, BooleanField, DateTimeField, IntegerField
 class BillValidator(Form):
     paid = BooleanField('Paid')
 
-    reciept_number = StringField('Reciept Number', [
+    receipt_number = StringField('Receipt Number', [
         validators.DataRequired(),
-        validators.Length(min=1, max=120, message='Reciept number must be between 1 and 120 characters.')
+        validators.Length(min=1, max=120, message='Receipt number must be between 1 and 120 characters.')
     ])
 
     customer_id = IntegerField('Customer Id', [

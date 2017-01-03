@@ -48,7 +48,7 @@ def bill_index():
 
     for b in bill_query.items:
         bill = b.to_dict()
-        print(bill)
+        bill['num_of_items'] = len(b.items)
 
         bills.append(bill)
 
@@ -115,6 +115,7 @@ def restaurant_bill_index(restaurantId):
                 'total' : bill_query.total
             },
             'data' : {
+                'restaurant': restaurant.to_dict(),
                 'bills' : bills
             }
         })
@@ -173,7 +174,7 @@ def restaurant_bill_index(restaurantId):
             if not 'created_at' in json:
                 json['created_at'] = datetime.now()
 
-            bill = Bill(customer, json['paid'], json['reciept_number'], json['message'], json['created_at'])
+            bill = Bill(customer, json['paid'], json['receipt_number'], json['message'], json['created_at'])
 
             bill.items = items
             bill.restaurant_id = restaurantId
@@ -241,7 +242,6 @@ def bill_single(billId):
 
 
     if request.method == 'GET':
-        # check if user owns bill
         data = {}
         data['bill'] = bill.to_dict()
 
@@ -278,7 +278,7 @@ def bill_single(billId):
 
             if 'paid' in request.json:
                 bill.paid = request.json['paid']
-            bill.reciept_number = request.json['reciept_number']
+            bill.receipt_number = request.json['receipt_number']
             if 'message' in request.json:
                 bill.message = request.json['message']
             if 'created_at' in request.json:
@@ -328,6 +328,8 @@ def bill_single(billId):
             if items:
                 for item in items:
                     items_json.append(item.to_dict())
+
+            bill.updated_at = datetime.now()
 
             try:
                 db.session.commit()
