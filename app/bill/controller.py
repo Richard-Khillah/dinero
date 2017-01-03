@@ -1,4 +1,4 @@
-from flask import Blueprint, request, g, jsonify
+from flask import Blueprint, request, g, jsonify, abort
 from datetime import datetime
 
 from app import app, db
@@ -100,14 +100,15 @@ def restaurant_bill_index(restaurantId):
 
         bills = []
 
-        print(bill_query)
-
         for b in bill_query.items:
             bill = b.to_dict()
-
             bill['customer'] = b.customer.to_dict()
 
-            print(bill)
+            items = []
+            for item in b.items:
+                items.append(item.to_dict())
+
+            bill['items'] = items
             bills.append(bill)
 
         return jsonify({
@@ -171,14 +172,10 @@ def restaurant_bill_index(restaurantId):
 
                     items.append(item)
 
-            print(items)
-
             json = request.json
 
             if not 'created_at' in json:
                 json['created_at'] = datetime.now()
-
-            print(customer)
 
             bill = Bill(customer, json['paid'], json['reciept_number'], json['message'], json['created_at'])
 
@@ -216,5 +213,47 @@ def restaurant_bill_index(restaurantId):
 @billMod.route('/<int:billId>', methods=['GET', 'PUT', 'DELETE'])
 @requires_login
 def bill_single(billId):
+    bills = None
+
+    try:
+        bills = Bill.query.filter(Bill.id==billId).all()
+    except:
+        return(error('Unable to find Bill.', {
+            'bill' : ['Unable to find bill']
+        })), 400
+
+    if not bills:
+        return(error('Unable to find Bill.', {
+            'bill' : ['Unable to find bill']
+        })), 400
+
+    bill = bills[0]
+
+
+    is_customer = bill.customer.id is g.user.id
+    is_at_least_server = g.user.role >= USER.SERVER # check is right restaurant
+
+    if not is_customer and not is_at_least_server:
+        abort(403)
+    elif is_at_least_server and not is_customer:
+        if not hasattr(g.user, 'restaurant'):
+            abort(403)
+
+        if g.user.restaurant != bill.restaurant_id:
+            abort(403)
+
+
     if request.method == 'GET':
-        pass
+        # check if user owns bill
+        data = {}
+        data['bill'] = bill.to_dict()
+
+        items = []
+
+        for item in bill.items:
+            items.append(item.to_dict())
+        print(data)
+        data['items'] = items
+        data['bill']['customer_id'] = bill.customer_id
+
+        return jsonify(success('Bill found', data))
