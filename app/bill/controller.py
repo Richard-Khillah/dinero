@@ -104,11 +104,7 @@ def restaurant_bill_index(restaurantId):
             bill = b.to_dict()
             bill['customer'] = b.customer.to_dict()
 
-            items = []
-            for item in b.items:
-                items.append(item.to_dict())
-
-            bill['items'] = items
+            bill['num_of_items'] = len(b.items)
             bills.append(bill)
 
         return jsonify({
@@ -218,13 +214,15 @@ def bill_single(billId):
     try:
         bills = Bill.query.filter(Bill.id==billId).all()
     except:
-        return(error('Unable to find Bill.', {
+        return jsonify(error('Unable to find Bill.', {
             'bill' : ['Unable to find bill']
         })), 400
 
+    print(bills)
+
     if not bills:
-        return(error('Unable to find Bill.', {
-            'bill' : ['Unable to find bill']
+        return jsonify(error('Unable to find Bill.', {
+            'bill' : ['Unable to find bill with id of %d' % billId]
         })), 400
 
     bill = bills[0]
@@ -257,3 +255,18 @@ def bill_single(billId):
         data['bill']['customer_id'] = bill.customer_id
 
         return jsonify(success('Bill found', data))
+
+    elif request.method == 'DELETE':
+
+        try:
+            db.session.delete(bill)
+            db.session.commit()
+        except:
+            return jsonify(error('There was a problem deleting the bill', {
+                'server' : ['Server error occured']
+            })), 500
+
+        return jsonify(success('Successfully deleted the bill with id of %d' % billId))
+
+    else:
+        pass
