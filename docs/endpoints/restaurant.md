@@ -1,7 +1,6 @@
 # Restaurant Module
 ---
 
-
 ## Endpoint: GET /restaurants/
 **Authentication:** OWNER or ADMIN
 
