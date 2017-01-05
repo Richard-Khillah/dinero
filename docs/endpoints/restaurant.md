@@ -2,7 +2,7 @@
 ---
 
 ## Endpoint: GET /restaurants/
-**Authentication:** No Auth needed __FOR NOW__
+**Authentication:** OWNER or ADMIN
 
 ### Response
 ```javascript
@@ -31,7 +31,7 @@
 ---
 
 ## Endpoint: POST  /restaurants/
-**Authentication:** No Auth needed __FOR NOW__
+**Authentication:** USER
 
 ### Request
 ```JSON
@@ -63,9 +63,9 @@
 ```
 ---
 
-## Endpoint: GET  /restaurants/<int:restaurantId>
+## Endpoint: GET  /restaurants/{ int:restaurantId }
 
-**Authentication:** No Auth needed __FOR NOW__
+**Authentication:** USER
 
 
 ### Response
@@ -88,8 +88,8 @@
 ```
 ---
 
-## Endpoint: PUT  /restaurants/<int:restaurantId>
-**Authentication:** No Auth needed __FOR NOW__
+## Endpoint: PUT  /restaurants/{ int:restaurantId }
+**Authentication:** OWNER.id == user.id  or ADMIN
 
 ### Request
 ```JSON
@@ -121,9 +121,9 @@
 ```
 ---
 
-## Endpoint: DELETE  /restaurants/<int:restaurantId>
+## Endpoint: DELETE  /restaurants/{ int:restaurantId }
 
-**Authentication:** No Auth needed __FOR NOW__
+**Authentication:** OWNER.id == user.id or ADMIN
 
 
 ### Response
