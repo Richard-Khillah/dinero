@@ -2,9 +2,6 @@ bcrypt==3.1.2
 cffi==1.9.1
 click==6.6
 coreapi==2.1.1
-Django==1.10.4
-django-rest-swagger==2.1.0
-djangorestframework==3.5.3
 Flask==0.11.1
 Flask-Bcrypt==0.7.1
 Flask-Restless==0.17.0
@@ -24,7 +21,6 @@ python-dateutil==2.6.0
 python-mimeparse==1.6.0
 PyYAML==3.11
 requests==2.10.0
-ruamel-yaml===-VERSION
 simplejson==3.10.0
 six==1.10.0
 SQLAlchemy==1.1.4

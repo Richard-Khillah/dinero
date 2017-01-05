@@ -66,7 +66,9 @@ def error_unauthorized(error):
 from app.auth.controller import auth as authModule
 from app.restaurant.controller import restaurantMod
 from app.item.controller import itemMod
+from app.bill.controller import billMod
 
 app.register_blueprint(authModule)
 app.register_blueprint(restaurantMod)
+app.register_blueprint(billMod)
 app.register_blueprint(itemMod)

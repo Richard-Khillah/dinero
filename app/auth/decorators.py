@@ -12,10 +12,34 @@ def requires_login(f):
         return f(*args, **kwargs)
     return decorated_function
 
-def requres_status_manager(f):
+def requires_at_least_manager(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
         if g.user.role < USER.MANAGER:
+            abort(403)
+        return f(*args, **kwargs)
+    return decorated_function
+
+def requires_admin(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if g.user.role != USER.ADMIN:
+            abort(403)
+        return f(*args, **kwargs)
+    return decorated_function
+
+def requires_at_least_owner(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if g.user.role < USER.OWNER:
+            abort(403)
+        return f(*args, **kwargs)
+    return decorated_function
+
+def requires_at_least_server(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if g.user.role < USER.SERVER:
             abort(403)
         return f(*args, **kwargs)
     return decorated_function
