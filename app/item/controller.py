@@ -46,17 +46,11 @@ def index(path):
         if authorizedUser:
             items = get('all_items')
 
-            return jsonify({
-                'status': 'success',
-                # Return allavailable information about all items
-                'data': [repr(item) for item in items]
-            }), 200
-
             if items:
                 return jsonify({
                     'status': 'success',
                     # Return allavailable information about all items
-                    'data': [repr(item) for item in items]
+                    'data': [serialize(item) for item in items]
                 }), 200
             else:
                 return jsonify({

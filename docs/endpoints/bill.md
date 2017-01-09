@@ -35,7 +35,7 @@
 ---
 
 
-## Endpoint: GET /restaurant/{ int:restaurantId }
+## Endpoint: GET bills/restaurant/{ int:restaurantId }
 **Authentication:** SERVER+
 
 ### Response
@@ -73,7 +73,7 @@
 ```
 ---
 
-## Endpoint: POST /restaurant/{ int:restaurantId }
+## Endpoint: POST bills/restaurant/{ int:restaurantId }
 **Authentication:** SERVER+
 
 ### Request
