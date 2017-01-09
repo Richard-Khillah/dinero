@@ -41,7 +41,7 @@ def index_restaurant():
         if g.user.role == USER.ADMIN:
             restaurant_query = Restaurant.query.paginate(page,25,False)
         elif g.user.role == USER.OWNER:
-            restaurant_query = Restaurant.query.join(Restaurant.owner, aliased=True).filter(User.id==g.user.id).paginate(page, 25,False)
+            restaurant_query = Restaurant.query.join(Restaurant.owner, aliased=True).filter(User.id==g.user.id).paginate(page, 100,False)
         else:
             return jsonify({
                 'status' : 'error',
@@ -77,9 +77,9 @@ def index_restaurant():
         except:
             return jsonify({
                 'status' : 'error',
-                'errors' : [
-                    'Restaurant number must be a positive integer.'
-                ],
+                'errors' : {
+                    'restaurant_number': 'Restaurant number must be a positive integer.'   
+                },
                 'message' : 'There was a problem making the request.'
             }), 400
 
@@ -149,17 +149,14 @@ def restaurant_view(restaurantId):
     # Happens for every request on this route
     if restaurantId < 1:
         return jsonify({
-        'message' : 'There was an error',
-        'errors' : {
-        'restaurantId' : 'Must be greater than 0'
+            'message' : 'There was an error',
+            'errors' : {
+            'restaurantId' : 'Must be greater than 0'
         }
         }), 404
 
     restaurants = Restaurant.query.filter(Restaurant.id == restaurantId).all()
 
-
-    is_owner = restaurants[0].owner.id == g.user.id
-    is_admin = g.user.get_role() == 'admin'
 
     if not restaurants:
         return jsonify({
@@ -168,6 +165,9 @@ def restaurant_view(restaurantId):
         'restaurant' : 'No restaurant with id of %d' % restaurantId
         }
         }), 404
+
+    is_owner = restaurants[0].owner.id == g.user.id
+    is_admin = g.user.get_role() == 'admin'
 
     if request.method == 'GET': # single view
         restaurant = restaurants[0].to_dict()

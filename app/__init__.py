@@ -7,6 +7,7 @@ from flask import Flask, jsonify, request, g
 from flask_sqlalchemy import SQLAlchemy
 from flask_bcrypt import Bcrypt
 import jwt
+from flask_cors import CORS
 
 # config
 from config import config
@@ -18,6 +19,7 @@ app.config.from_object(config['DEVELOPMENT'])
 # initialize the extensions
 db = SQLAlchemy(app)
 bcrypt = Bcrypt(app)
+CORS(app, supports_credentials=True)
 
 # import models
 from app.auth.models.User import User
@@ -39,26 +41,46 @@ def before_request():
         g.user = None
 
 
+
 # error handlers
+@app.errorhandler(500)
+def error_sever(error):
+    return jsonify({
+        'status' : 'error',
+        'message' : 'There was a server error',
+        'errors' : {
+            'server' : ['there was a server error']
+        }
+    })
+
 @app.errorhandler(404)
 def not_found(error):
     return jsonify({
         'status' : 'error',
-        'message' : 'Page not found'
+        'message' : 'Page not found',
+        'errors' : {
+            'page' : ['page not found']
+        }
     }), 404
 
 @app.errorhandler(403)
 def error_forbidden(error):
     return jsonify({
         'status' : 'error',
-        'message' : 'You are not allowed'
+        'message' : 'You are not allowed',
+        'errors' : {
+            'user' : ['You are not allowed to use this.']
+        }
     }), 403
 
 @app.errorhandler(401)
 def error_unauthorized(error):
     return jsonify({
         'status' : 'error',
-        'message' : 'You must login first'
+        'message' : 'You must login first',
+        'errors' : {
+            'user' : ['You must login to use this route']
+        }
     }), 401
 
 

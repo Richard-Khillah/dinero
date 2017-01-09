@@ -42,7 +42,7 @@ def bill_index():
 
     bill_query = None
 
-    bill_query = Bill.query.paginate(page,25,False)
+    bill_query = Bill.query.paginate(page, 100, False)
 
     bills = []
 
@@ -96,7 +96,7 @@ def restaurant_bill_index(restaurantId):
         else:
             page = 1
 
-        bill_query = Bill.query.filter(Bill.restaurant_id==restaurantId).paginate(page, 25, False)
+        bill_query = Bill.query.filter(Bill.restaurant_id == restaurantId).paginate(page, 100, False)
 
         bills = []
 
@@ -235,7 +235,7 @@ def bill_single(billId):
     if not is_customer and not is_at_least_server:
         abort(403)
     elif is_at_least_server and not is_customer:
-        if not hasattr(g.user, 'restaurant'):
+        if not hasattr(g.user, 'restaurant_id'):
             abort(403)
 
         if g.user.restaurant != bill.restaurant_id:

@@ -23,7 +23,11 @@ def index():
     for user in users:
         users_dicts.append(user.to_dict())
 
-    return jsonify({'message': 'done', 'data': {'users': users_dicts}})
+    return jsonify({
+            'status' : 'success',
+            'message': 'done', 
+            'data': {'users': users_dicts}
+        })
 
 
 @auth.route('/login', methods=['POST'])
@@ -31,14 +35,22 @@ def login():
 
     if not 'email' in request.json or not 'password' in request.json :
         return jsonify({
-            'message' : 'Missing email or password'
+            'status' : 'error',
+            'message' : 'Missing email or password',
+            'errors' : {
+                'email or password' : ['Missing email or password']
+            }
         }), 400
 
     user = User.query.filter(User.email==request.json['email']).order_by(User.id).all()
 
     if len(user) is 0:
         return jsonify({
-            'message' : 'Email or password incorrect.'
+            'status' : 'error',
+            'message' : 'Email or password incorrect.',
+            'errors' : {
+                'email or password' : ['email or password incorrect.']
+            }
         }), 401
 
     if user[0].check_password(request.json['password']):
@@ -48,6 +60,7 @@ def login():
         token = jwt.encode(payload, app.config['SECRET_KEY'])
 
         return jsonify({
+            'status' : 'success',
             'message' : 'successfully logged in.',
             'data' : {
                 'user' : user[0].to_dict(),
@@ -57,7 +70,11 @@ def login():
 
 
     return jsonify({
-        'message' : 'Email or password incorrect.'
+        'status' : 'error',
+        'message' : 'Email or password incorrect.',
+        'errors' : {
+            'email or password' : ['email or password incorrect']
+        }
     }), 401
 
 #router is /auth/register
@@ -80,7 +97,11 @@ def register():
 
         if len(users) != 0:
             return jsonify({
-                'message': 'That user already exists'
+                'status' : 'error',
+                'message': 'That user already exists',
+                'errors' : {
+                    'user' : ['That username or email is already taken']
+                }
             }), 400
 
 
@@ -94,7 +115,14 @@ def register():
         # create a jwt token for user
         token = jwt.encode(payload, app.config['SECRET_KEY'])
 
-        return jsonify({'message' : 'Account created successfully.', 'user' : user.to_dict(), 'token' : token.decode('utf-8')}), 201
+        return jsonify({ 
+            'message' : 'Account created successfully.', 
+            'status' : 'success',
+            'data' : {
+                'user' : user.to_dict(), 
+                'token' : token.decode('utf-8')}
+            }
+        ), 201
 
 
-    return jsonify({'message' : 'There is missing data', 'errors' : form.errors}), 400
+    return jsonify({'status' : 'error', 'message' : 'There is missing data', 'errors' : form.errors}), 400
