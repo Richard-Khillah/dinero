@@ -41,7 +41,6 @@ def before_request():
         g.user = None
 
 
-
 # error handlers
 @app.errorhandler(500)
 def error_sever(error):

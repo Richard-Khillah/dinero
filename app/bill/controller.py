@@ -22,7 +22,6 @@ billMod = Blueprint('bills', __name__, url_prefix='/bills')
 
 @billMod.route('/')
 @requires_login
-@requires_admin
 def bill_index():
     page = None
     # check if user supplied a page number in query
@@ -42,7 +41,12 @@ def bill_index():
 
     bill_query = None
 
-    bill_query = Bill.query.paginate(page, 100, False)
+    is_admin = g.user.role == USER.ADMIN
+
+    if is_admin:
+        bill_query = Bill.query.paginate(page, 100, False)
+    else:
+        bill_query = Bill.query.filter(Bill.customer == g.user).paginate(page, 100, False)
 
     bills = []
 
@@ -238,7 +242,7 @@ def bill_single(billId):
         if not hasattr(g.user, 'restaurant_id'):
             abort(403)
 
-        if g.user.restaurant != bill.restaurant_id:
+        if g.user.restaurant_id != bill.restaurant_id:
             abort(403)
 
 

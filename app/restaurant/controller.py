@@ -47,7 +47,7 @@ def index_restaurant():
                 'status' : 'error',
                 'message': 'You are not allowed.',
                 'errors' : {
-                    'user' : 'Not authorized'
+                    'user' : ['Not authorized']
                 }
             }), 403
 
@@ -80,7 +80,7 @@ def index_restaurant():
                 'errors' : {
                     'restaurant_number': 'Restaurant number must be a positive integer.'   
                 },
-                'message' : 'There was a problem making the request.'
+                'message' : ['There was a problem making the request.']
             }), 400
 
         request.json['owner_id'] = g.user.id
@@ -123,7 +123,7 @@ def index_restaurant():
                     'status' : 'error',
                     'message' : 'There was a problem adding the restaurant',
                     'errors' : {
-                        'server' : 'There was a server error'
+                        'server' : ['There was a server error']
                     }
                 }), 500
 
@@ -138,6 +138,7 @@ def index_restaurant():
 
         # if there were form errors
         return jsonify({
+            'status' : 'error',
             'message' : 'There is missing data',
             'errors' : form.errors
         }), 400
@@ -149,9 +150,10 @@ def restaurant_view(restaurantId):
     # Happens for every request on this route
     if restaurantId < 1:
         return jsonify({
+            'status' : 'error',
             'message' : 'There was an error',
             'errors' : {
-            'restaurantId' : 'Must be greater than 0'
+            'restaurantId' : ['Must be greater than 0']
         }
         }), 404
 
@@ -160,10 +162,11 @@ def restaurant_view(restaurantId):
 
     if not restaurants:
         return jsonify({
-        'message' : 'Restaurant cannot be found',
-        'errors' : {
-        'restaurant' : 'No restaurant with id of %d' % restaurantId
-        }
+            'status' : 'error',
+            'message' : 'Restaurant cannot be found',
+            'errors' : {
+                'restaurant' : ['No restaurant with id of %d' % restaurantId]
+            }
         }), 404
 
     is_owner = restaurants[0].owner.id == g.user.id
@@ -186,7 +189,7 @@ def restaurant_view(restaurantId):
                 'status' : 'error',
                 'message' : 'You are not allowed',
                 'errors' : {
-                    'user' : 'Not allowed'
+                    'user' : ['Not allowed']
                 }
             }), 403
 
@@ -215,7 +218,7 @@ def restaurant_view(restaurantId):
                 'status' : 'error',
                 'message' : 'You are not allowed',
                 'errors' : {
-                    'user' : 'Not allowed'
+                    'user' : ['Not allowed']
                 }
             }), 403
 
@@ -224,9 +227,9 @@ def restaurant_view(restaurantId):
         except:
             return jsonify({
                 'status' : 'error',
-                'errors' : [
-                    'Restaurant number must be a positive integer.'
-                ],
+                'errors' : {
+                    'restaurant_number' : ['Restaurant number must be a positive integer.']
+                 },
                 'message' : 'There was a problem making the request.'
             }), 400
 
@@ -271,7 +274,7 @@ def restaurant_view(restaurantId):
                     'status' : 'error',
                     'message' : 'There was a problem adding the restaurant',
                     'errors' : {
-                        'server' : 'There was a server error'
+                        'server' : ['There was a server error']
                     }
                 }), 500
 
