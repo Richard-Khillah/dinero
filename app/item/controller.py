@@ -63,7 +63,7 @@ def index(path):
             return jsonify({
                 'status': 'success',
                 #return only `menu style` information
-                'data': [str(item) for item in items]
+                'data': [serialize(item) for item in items]
             }), 200
 
     # add item to database
@@ -75,7 +75,7 @@ def index(path):
 
                 return jsonify({
                     'status': 'success',
-                    'data': [repr(item) for item in items]
+                    'data': [serialize(item) for item in items]
                 }), 200
 
             elif not path:
@@ -187,7 +187,7 @@ def update(itemId):
                 }), 200
             else:
                 # Return the raw form of the item
-                item = repr(item)
+                item = serialize(item)
                 return jsonify({
                     'status': 'success',
                     'message': 'found item successfully',

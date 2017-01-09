@@ -5,7 +5,7 @@ from app.item.constants import Category
 
 class Item(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    resturant_id = db.Column(db.Integer)
+    restaurant_id = db.Column(db.Integer)
     name = db.Column(db.String(50))
     cost = db.Column(db.Float)
     description = db.Column(db.String(100)) #can be a db.Text() field
@@ -52,7 +52,3 @@ class Item(db.Model):
     def __str__(self):
         return '<Item %d %r>' % (self.id, self.name)
         #return '<Item %r $%f %r>' % (self.name, self.cost, self.description)
-    def __repr__(self):
-        return '<Item %d %r %f %r %r %r>' % \
-               (self.id, self.name, self.cost, self.description, self.category, \
-               str(self.date_created))
